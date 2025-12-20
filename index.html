@@ -88,7 +88,13 @@ fetch(API_URL)
     const container = document.getElementById("products");
 
     data.forEach(p => {
-      const image = p["รูปภาพ"] || "";
+let image = p["รูปภาพ"] || "";
+if (image.includes("drive.google.com")) {
+  const id = image.match(/\/d\/(.*?)\//);
+  if (id && id[1]) {
+    image = `https://drive.google.com/uc?id=${id[1]}`;
+  }
+}
       const link  = p["LINK"] || "#";
 
       container.innerHTML += `
@@ -111,3 +117,4 @@ fetch(API_URL)
 
 </body>
 </html>
+
