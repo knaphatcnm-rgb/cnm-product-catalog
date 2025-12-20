@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CNM Interior – Product Catalog</title>
+
+  <style>
+    body{
+      margin:0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:#f4f4f4;
+      color:#333;
+    }
+    header{
+      background:#111;
+      color:#fff;
+      padding:16px;
+      text-align:center;
+      font-size:18px;
+      letter-spacing:0.5px;
+    }
+    .container{
+      padding:12px;
+    }
+    .card{
+      background:#fff;
+      border-radius:14px;
+      margin-bottom:16px;
+      overflow:hidden;
+      box-shadow:0 6px 18px rgba(0,0,0,0.08);
+    }
+    .card img{
+      width:100%;
+      height:220px;
+      object-fit:cover;
+      background:#eee;
+    }
+    .content{
+      padding:14px;
+    }
+    .code{
+      font-size:12px;
+      color:#888;
+    }
+    .name{
+      font-size:16px;
+      font-weight:600;
+      margin:6px 0;
+    }
+    .size{
+      font-size:14px;
+      color:#555;
+      margin-bottom:8px;
+    }
+    .price{
+      font-size:18px;
+      font-weight:700;
+      color:#0a7cff;
+      margin-bottom:10px;
+    }
+    .btn{
+      display:block;
+      text-align:center;
+      padding:10px;
+      background:#0a7cff;
+      color:#fff;
+      border-radius:10px;
+      text-decoration:none;
+      font-size:14px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  CNM Interior Product Catalog
+</header>
+
+<div class="container" id="products"></div>
+
+<script>
+const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLgvU7XpQDBrBDTJshAzTjxwOc5vzTkBRqRJ4_HgHMJUvozWCEP6HVo4VipS3YCbLwIHh0FeMIo8-NQs3lV7oeULravdlZRpptdgGG3_qOtXA1FTlpHqGDXQ6rqVjiX1W5ksR0SFckBzVgGKAsluGCBth8k4MOroUZPQjSrqpE7VO3Q5XEO1-bWjpEaN4kxMKK6o4BcRt_7-_FzFD0Wyh12afkx_ywjm-kIcrecGU0SCqLfwbbgjBJ4z0pfNtKbHdmSnZ3hnSdV-OygkFxtlrDYOffDYExwPr8IHsYq0&lib=M2RbWOpjdNw0VR1x9mWPH6LN6HghVZiIR";
+
+fetch(API_URL)
+  .then(res => res.json())
+  .then(data => {
+    const container = document.getElementById("products");
+
+    data.forEach(p => {
+      const image = p["รูปภาพ"] || "";
+      const link  = p["LINK"] || "#";
+
+      container.innerHTML += `
+        <div class="card">
+          <img src="${image}">
+          <div class="content">
+            <div class="code">${p["CODE"] || ""}</div>
+            <div class="name">${p["NAME"] || ""}</div>
+            <div class="size">${p["ขนาด"] || ""}</div>
+            <div class="price">${p["ราคา"] ? Number(p["ราคา"]).toLocaleString() + " บาท" : ""}</div>
+            <a class="btn" href="${link}" target="_blank">
+              ดูรายละเอียดสินค้า
+            </a>
+          </div>
+        </div>
+      `;
+    });
+  });
+</script>
+
+</body>
+</html>
