@@ -86,32 +86,49 @@ fetch(CSV_URL)
   .then(res => res.text())
   .then(text => {
     const rows = parseCSV(text);
-    const headers = rows.shift().map(h => h.trim());
-
-    console.log("HEADERS:", headers);
+    const headers = rows.shift();
 
     const container = document.getElementById("products");
     container.innerHTML = "";
 
     rows.forEach(row => {
+      if (row.length < headers.length) return;
+
       let p = {};
       headers.forEach((h, i) => p[h] = (row[i] || "").trim());
 
+      /* ---------- IMAGE ---------- */
       let image = p["รูปภาพ"] || "";
       if (image.includes("drive.google.com")) {
-        const m = image.match(/\/d\/(.*?)\//);
+        const m = image.match(/\/d\/([^/]+)/);
         if (m) image = `https://drive.google.com/uc?id=${m[1]}`;
       }
+      if (!image) {
+        image = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='220'><rect width='100%' height='100%' fill='%23eee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='20'>No Image</text></svg>";
+      }
+
+      /* ---------- PRICE ---------- */
+      let priceText = "";
+      if (p["ราคา"]) {
+        const priceNumber = Number(p["ราคา"].replace(/,/g, ""));
+        if (!isNaN(priceNumber)) {
+          priceText = priceNumber.toLocaleString() + " บาท";
+        }
+      }
+
+      const link = p["LINK"] || "#";
 
       container.innerHTML += `
         <div class="card">
-          <img src="${image}" onerror="this.src='https://via.placeholder.com/400x220?text=No+Image'">
+          <img src="${image}">
           <div class="content">
             <div class="code">${p["CODE"] || ""}</div>
             <div class="name">${p["NAME"] || ""}</div>
             <div class="size">${p["ขนาด"] || ""}</div>
-            <div class="price">${p["ราคา"] ? Number(p["ราคา"]).toLocaleString() + " บาท" : ""}</div>
-            <a class="btn" href="${p["LINK"] || "#"}" target="_blank">ดูรายละเอียดสินค้า</a>
+            <div class="price">${priceText}</div>
+            <a class="btn" href="${link}" target="_blank">
+              ดูรายละเอียดสินค้า
+            </a>
           </div>
         </div>
       `;
@@ -153,8 +170,10 @@ function parseCSV(text) {
 
 
 
+
 </body>
 </html>
+
 
 
 
