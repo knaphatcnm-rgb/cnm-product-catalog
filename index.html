@@ -80,58 +80,80 @@
 <div class="container" id="products"></div>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDhv-ti8VG4RV7TjgJqVz4kMRuWcY_nbqhcvW6WdjPUJwa4T6qFNUHBq47RjN5wDGRtKdI23BpdKpl/pub?gid=0&single=true&output=csv";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDhv-ti8VG4RV7TjgJqVz4kMRuWcY_nbqhcvW6WdjPUJwa4T6qFNUHBq47RjN5wDGRtKdI23BpdKpl/pub?output=csv";
 
 fetch(CSV_URL)
   .then(res => res.text())
-  .then(csv => {
-    const rows = csv.split("\n").map(r => r.split(","));
-    const headers = rows.shift().map(h => h.replace(/"/g,"").trim());
+  .then(text => {
+    const rows = parseCSV(text);
+    const headers = rows.shift();
 
     const container = document.getElementById("products");
+    container.innerHTML = "";
 
     rows.forEach(row => {
-      if (row.length < headers.length) return;
-
       let p = {};
-      headers.forEach((h,i) => {
-        p[h] = (row[i] || "").replace(/"/g,"").trim();
-      });
+      headers.forEach((h, i) => p[h] = row[i] || "");
 
-      // รูปจาก Google Drive
-      let image = p["รูปภาพ"] || "";
+      let image = p["รูปภาพ"];
       if (image.includes("drive.google.com")) {
-        const id = image.match(/\/d\/(.*?)\//);
-        if (id && id[1]) {
-          image = `https://drive.google.com/uc?id=${id[1]}`;
-        }
+        const m = image.match(/\/d\/(.*?)\//);
+        if (m) image = `https://drive.google.com/uc?id=${m[1]}`;
       }
-
-      const link = p["LINK"] || "#";
 
       container.innerHTML += `
         <div class="card">
-          <img src="${image}">
+          <img src="${image}" onerror="this.src='https://via.placeholder.com/400x220?text=No+Image'">
           <div class="content">
-            <div class="code">${p["CODE"] || ""}</div>
-            <div class="name">${p["NAME"] || ""}</div>
-            <div class="size">${p["ขนาด"] || ""}</div>
-            <div class="price">
-              ${p["ราคา"] ? Number(p["ราคา"]).toLocaleString() + " บาท" : ""}
-            </div>
-            <a class="btn" href="${link}" target="_blank">
-              ดูรายละเอียดสินค้า
-            </a>
+            <div class="code">${p["CODE"]}</div>
+            <div class="name">${p["NAME"]}</div>
+            <div class="size">${p["ขนาด"]}</div>
+            <div class="price">${p["ราคา"] ? Number(p["ราคา"]).toLocaleString() + " บาท" : ""}</div>
+            <a class="btn" href="${p["LINK"]}" target="_blank">ดูรายละเอียดสินค้า</a>
           </div>
         </div>
       `;
     });
   });
+
+/* CSV Parser ที่รองรับภาษาไทย + comma */
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let val = "";
+  let insideQuote = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i + 1];
+
+    if (c === '"' && next === '"') {
+      val += '"'; i++;
+    } else if (c === '"') {
+      insideQuote = !insideQuote;
+    } else if (c === "," && !insideQuote) {
+      row.push(val.trim()); val = "";
+    } else if ((c === "\n" || c === "\r") && !insideQuote) {
+      if (val || row.length) row.push(val.trim());
+      if (row.length) rows.push(row);
+      row = []; val = "";
+    } else {
+      val += c;
+    }
+  }
+  if (val || row.length) {
+    row.push(val.trim());
+    rows.push(row);
+  }
+  return rows;
+}
 </script>
+
 
 
 </body>
 </html>
+
 
 
 
