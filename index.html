@@ -86,16 +86,18 @@ fetch(CSV_URL)
   .then(res => res.text())
   .then(text => {
     const rows = parseCSV(text);
-    const headers = rows.shift();
+    const headers = rows.shift().map(h => h.trim());
+
+    console.log("HEADERS:", headers);
 
     const container = document.getElementById("products");
     container.innerHTML = "";
 
     rows.forEach(row => {
       let p = {};
-      headers.forEach((h, i) => p[h] = row[i] || "");
+      headers.forEach((h, i) => p[h] = (row[i] || "").trim());
 
-      let image = p["รูปภาพ"];
+      let image = p["รูปภาพ"] || "";
       if (image.includes("drive.google.com")) {
         const m = image.match(/\/d\/(.*?)\//);
         if (m) image = `https://drive.google.com/uc?id=${m[1]}`;
@@ -105,11 +107,11 @@ fetch(CSV_URL)
         <div class="card">
           <img src="${image}" onerror="this.src='https://via.placeholder.com/400x220?text=No+Image'">
           <div class="content">
-            <div class="code">${p["CODE"]}</div>
-            <div class="name">${p["NAME"]}</div>
-            <div class="size">${p["ขนาด"]}</div>
+            <div class="code">${p["CODE"] || ""}</div>
+            <div class="name">${p["NAME"] || ""}</div>
+            <div class="size">${p["ขนาด"] || ""}</div>
             <div class="price">${p["ราคา"] ? Number(p["ราคา"]).toLocaleString() + " บาท" : ""}</div>
-            <a class="btn" href="${p["LINK"]}" target="_blank">ดูรายละเอียดสินค้า</a>
+            <a class="btn" href="${p["LINK"] || "#"}" target="_blank">ดูรายละเอียดสินค้า</a>
           </div>
         </div>
       `;
@@ -131,9 +133,9 @@ function parseCSV(text) {
     } else if (c === '"') {
       insideQuote = !insideQuote;
     } else if (c === "," && !insideQuote) {
-      row.push(val.trim()); val = "";
+      row.push(val); val = "";
     } else if ((c === "\n" || c === "\r") && !insideQuote) {
-      if (val || row.length) row.push(val.trim());
+      if (val || row.length) row.push(val);
       if (row.length) rows.push(row);
       row = []; val = "";
     } else {
@@ -141,7 +143,7 @@ function parseCSV(text) {
     }
   }
   if (val || row.length) {
-    row.push(val.trim());
+    row.push(val);
     rows.push(row);
   }
   return rows;
@@ -150,8 +152,10 @@ function parseCSV(text) {
 
 
 
+
 </body>
 </html>
+
 
 
 
