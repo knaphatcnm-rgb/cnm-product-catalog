@@ -80,20 +80,25 @@
 <div class="container" id="products"></div>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDhv-ti8VG4RV7TjgJqVz4kMRuWcY_nbqhcvW6WdjPUJwa4T6qFNUHBq47RjN5wDGRtKdI23BpdKpl/pub?gid=0&single=true&output=csv";
+const CSV_URL = "⛔ วางลิงก์ CSV ของคุณตรงนี้ ⛔";
 
 fetch(CSV_URL)
   .then(res => res.text())
-  .then(text => {
-    const rows = text.split("\n").map(r => r.split(","));
-    const headers = rows.shift();
+  .then(csv => {
+    const rows = csv.split("\n").map(r => r.split(","));
+    const headers = rows.shift().map(h => h.replace(/"/g,"").trim());
 
     const container = document.getElementById("products");
 
     rows.forEach(row => {
-      let p = {};
-      headers.forEach((h, i) => p[h.trim()] = row[i]?.trim());
+      if (row.length < headers.length) return;
 
+      let p = {};
+      headers.forEach((h,i) => {
+        p[h] = (row[i] || "").replace(/"/g,"").trim();
+      });
+
+      // รูปจาก Google Drive
       let image = p["รูปภาพ"] || "";
       if (image.includes("drive.google.com")) {
         const id = image.match(/\/d\/(.*?)\//);
@@ -102,6 +107,8 @@ fetch(CSV_URL)
         }
       }
 
+      const link = p["LINK"] || "#";
+
       container.innerHTML += `
         <div class="card">
           <img src="${image}">
@@ -109,7 +116,12 @@ fetch(CSV_URL)
             <div class="code">${p["CODE"] || ""}</div>
             <div class="name">${p["NAME"] || ""}</div>
             <div class="size">${p["ขนาด"] || ""}</div>
-            <div class="price">${p["ราคา"] || ""} บาท</div>
+            <div class="price">
+              ${p["ราคา"] ? Number(p["ราคา"]).toLocaleString() + " บาท" : ""}
+            </div>
+            <a class="btn" href="${link}" target="_blank">
+              ดูรายละเอียดสินค้า
+            </a>
           </div>
         </div>
       `;
@@ -117,8 +129,10 @@ fetch(CSV_URL)
   });
 </script>
 
+
 </body>
 </html>
+
 
 
 
