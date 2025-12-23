@@ -27,35 +27,32 @@ button{background:#06c755;color:#fff;border:none}
 
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwgjmM36XT3mLgB5exLxe9mcHvGEB2UtbuAyzLOieMm74Wqe2oI6xe-8ihVIsfiDF_eWw/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxHi1Sf6nuUqovgJIfsmQiqSslA2KVy0qBR_7rPH2dDT8P4e56bvD75CZnXya4HVaKSNA/exec";
 
-let profile = {};
+let profile = null;
 
-liff.init({ liffId: LIFF_ID })
-  .then(() => {
-    if (!liff.isLoggedIn()) {
-      liff.login();
-    } else {
-      return liff.getProfile();
-    }
-  })
-  .then(p => {
-    profile = p;
-    console.log("PROFILE OK", profile);
-  })
-  .catch(err => {
-    console.error("LIFF ERROR", err);
-  });
+async function initLIFF() {
+  await liff.init({ liffId: LIFF_ID });
 
-document.getElementById("regForm").addEventListener("submit", e => {
-  e.preventDefault();
-
-  if (!profile.userId) {
-    alert("ยังโหลดข้อมูล LINE ไม่เสร็จ กรุณารอสักครู่");
+  if (!liff.isLoggedIn()) {
+    liff.login();
     return;
   }
 
-  const payload = {
+  profile = await liff.getProfile();
+}
+
+initLIFF();
+
+document.getElementById("regForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  if (!profile) {
+    alert("กำลังโหลดข้อมูล LINE กรุณารอสักครู่");
+    return;
+  }
+
+  const payload = 
     userId: profile.userId,
     displayName: profile.displayName,
     full_name: document.getElementById("full_name").value,
@@ -66,24 +63,30 @@ document.getElementById("regForm").addEventListener("submit", e => {
 
   console.log("SEND", payload);
 
-  fetch(GAS_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  })
-  .then(res => res.json())
-  .then(() => {
-    document.getElementById("status").innerText =
-      "✅ ลงทะเบียนสำเร็จ รอการอนุมัติจากผู้ดูแล";
-  })
-  .catch(err => {
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      document.getElementById("status").innerText =
+        "✅ ลงทะเบียนสำเร็จ รอการอนุมัติจากผู้ดูแล";
+    } else {
+      throw new Error("Server error");
+    }
+  } catch (err) {
     console.error(err);
-    alert("เกิดข้อผิดพลาด");
-  });
+    alert("❌ เกิดข้อผิดพลาดในการลงทะเบียน");
+  }
 });
 </script>
+
 
 </body>
 </html>
