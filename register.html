@@ -13,22 +13,40 @@ button{background:#06c755;color:#fff;border:none}
 </head>
 <body>
 
-<h3>ลงทะเบียนพนักงาน CNM</h3>
+<h2>ลงทะเบียนพนักงาน CNM</h2>
 
-<input id="full_name" placeholder="ชื่อ-นามสกุล">
-<input id="employee_id" placeholder="รหัสพนักงาน">
-<input id="department" placeholder="แผนก">
-<input id="phone" placeholder="เบอร์โทร">
+<form id="regForm">
+  <input type="text" id="full_name" placeholder="ชื่อ-นามสกุล" required>
+  <input type="text" id="employee_id" placeholder="รหัสพนักงาน" required>
+  <input type="text" id="department" placeholder="แผนก" required>
+  <input type="tel" id="phone" placeholder="เบอร์โทร" required>
 
-<button onclick="submitForm()">บันทึกข้อมูล</button>
+  <button type="submit">ลงทะเบียน</button>
+</form>
+
+<p id="status"></p>
+
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycby8xn6TOUHzEHubvjvkTXYQbzsXqJm_SuL_snFRV5JrU8jIW6ChfFLRB2RMumVdATNXtw/exec";
+const LIFF_ID = "2008736700-X7cUjaUv";
+const GAS_URL = "PASTE_WEB_APP_URL_HERE"; // ← URL จาก Apps Script
 
-async function submitForm(){
-  await liff.init({ liffId: "2008736700-X7cUjaUv" });
+let profile = {};
 
-  const profile = await liff.getProfile();
+liff.init({ liffId: LIFF_ID })
+  .then(() => {
+    if (!liff.isLoggedIn()) {
+      liff.login();
+    } else {
+      return liff.getProfile();
+    }
+  })
+  .then(p => {
+    profile = p;
+  });
+
+document.getElementById("regForm").addEventListener("submit", e => {
+  e.preventDefault();
 
   const payload = {
     userId: profile.userId,
@@ -39,14 +57,16 @@ async function submitForm(){
     phone: document.getElementById("phone").value
   };
 
-  await fetch(GAS_URL,{
-    method:"POST",
+  fetch(GAS_URL, {
+    method: "POST",
     body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(() => {
+    document.getElementById("status").innerText =
+      "✅ ลงทะเบียนสำเร็จ รอการอนุมัติจากผู้ดูแล";
   });
-
-  alert("ส่งข้อมูลเรียบร้อย รอการอนุมัติ");
-  liff.closeWindow();
-}
+});
 </script>
 
 </body>
