@@ -7,10 +7,11 @@
 </head>
 <body>
 กำลังเปิดแบบฟอร์ม...
+
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
 const FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSdZnaIA6kRDuSXkhahUE60seFFcsq7_03EN4hqHNvFGvm53BQ/viewform?usp=header";
+  "https://docs.google.com/forms/d/e/1FAIpQLSdZnaIA6kRDuSXkhahUE60seFFcsq7_03EN4hqHNvFGvm53BQ/viewform";
 
 liff.init({ liffId: LIFF_ID }).then(async () => {
   if (!liff.isLoggedIn()) {
@@ -22,10 +23,10 @@ liff.init({ liffId: LIFF_ID }).then(async () => {
 
   const url =
     FORM_URL +
-    "?entry.111111=" + encodeURIComponent(profile.userId) +
-    "&entry.222222=" + encodeURIComponent(profile.displayName);
+    "?entry.123456=" + encodeURIComponent(profile.userId) +
+    "&entry.654321=" + encodeURIComponent(profile.displayName);
 
-  window.location.href = url;
+  window.location.replace(url);
 });
 </script>
 </body>
