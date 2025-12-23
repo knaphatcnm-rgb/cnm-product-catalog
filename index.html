@@ -80,93 +80,79 @@
 <div class="container" id="products"></div>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDhv-ti8VG4RV7TjgJqVz4kMRuWcY_nbqhcvW6WdjPUJwa4T6qFNUHBq47RjN5wDGRtKdI23BpdKpl/pub?output=csv";
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDhv-ti8VG4RV7TjgJqVz4kMRuWcY_nbqhcvW6WdjPUJwa4T6qFNUHBq47RjN5wDGRtKdI23BpdKpl/pub?output=csv";
 
+/* ---------- CSV PARSER ---------- */
+function parseCSV(text) {
+  const rows = [];
+  let row = [], val = "", quote = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i + 1];
+    if (c === '"' && n === '"') { val += '"'; i++; }
+    else if (c === '"') quote = !quote;
+    else if (c === "," && !quote) { row.push(val); val = ""; }
+    else if ((c === "\n" || c === "\r") && !quote) {
+      if (val || row.length) row.push(val);
+      if (row.length) rows.push(row);
+      row = []; val = "";
+    } else val += c;
+  }
+  if (val || row.length) { row.push(val); rows.push(row); }
+  return rows;
+}
+
+/* ---------- FETCH ---------- */
 fetch(CSV_URL)
-  .then(res => res.text())
+  .then(r => r.text())
   .then(text => {
     const rows = parseCSV(text);
     const headers = rows.shift();
-
     const container = document.getElementById("products");
     container.innerHTML = "";
 
     rows.forEach(row => {
       if (row.length < headers.length) return;
 
-      let p = {};
+      const p = {};
       headers.forEach((h, i) => p[h] = (row[i] || "").trim());
 
-      /* ---------- IMAGE ---------- */
+      /* IMAGE */
       let image = p["image_url"] || "";
-if (image.includes("drive.google.com")) {
-  const m = image.match(/\/d\/([^/]+)/);
-  if (m) image = `https://drive.google.com/uc?id=${m[1]}`;
-}
-
-      if (!image) {
-        image = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='220'><rect width='100%' height='100%' fill='%23eee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='20'>No Image</text></svg>";
+      if (!image && p["Drive_raw"]) {
+        const m = p["Drive_raw"].match(/\/d\/([^/]+)/);
+        if (m) image = `https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
       }
 
-      /* ---------- PRICE ---------- */
-      let priceText = "";
-      if (p["ราคา"]) {
-        const priceNumber = Number(p["ราคา"].replace(/,/g, ""));
-        if (!isNaN(priceNumber)) {
-          priceText = priceNumber.toLocaleString() + " บาท";
-        }
-      }
+      const price = Number((p["ราคา"] || "").replace(/,/g,""));
+      const priceText = !isNaN(price) ? price.toLocaleString()+" บาท" : "";
 
-      const link = p["LINK"] || "#";
-
-      container.innerHTML += `
+      container.insertAdjacentHTML("beforeend", `
         <div class="card">
-          <img src="${image}">
+          <img 
+            src="${image || ""}"
+            loading="lazy"
+            decoding="async"
+            referrerpolicy="no-referrer"
+            onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22220%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23eee%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2220%22>No Image</text></svg>'"
+          >
           <div class="content">
-            <div class="code">${p["CODE"] || ""}</div>
+            <div class="code">${p["Code"] || ""}</div>
             <div class="name">${p["NAME"] || ""}</div>
             <div class="size">${p["ขนาด"] || ""}</div>
             <div class="price">${priceText}</div>
-            <a class="btn" href="${link}" target="_blank">
+            <a class="btn" href="${p["LINK"] || "#"}" target="_blank">
               ดูรายละเอียดสินค้า
             </a>
           </div>
         </div>
-      `;
+      `);
     });
   });
-
-function parseCSV(text) {
-  const rows = [];
-  let row = [];
-  let val = "";
-  let insideQuote = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    const next = text[i + 1];
-
-    if (c === '"' && next === '"') {
-      val += '"'; i++;
-    } else if (c === '"') {
-      insideQuote = !insideQuote;
-    } else if (c === "," && !insideQuote) {
-      row.push(val); val = "";
-    } else if ((c === "\n" || c === "\r") && !insideQuote) {
-      if (val || row.length) row.push(val);
-      if (row.length) rows.push(row);
-      row = []; val = "";
-    } else {
-      val += c;
-    }
-  }
-  if (val || row.length) {
-    row.push(val);
-    rows.push(row);
-  }
-  return rows;
-}
 </script>
+
+
 
 
 
@@ -174,6 +160,7 @@ function parseCSV(text) {
 
 </body>
 </html>
+
 
 
 
