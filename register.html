@@ -20,16 +20,14 @@ button{background:#06c755;color:#fff;border:none}
   <input type="text" id="employee_id" placeholder="รหัสพนักงาน" required>
   <input type="text" id="department" placeholder="แผนก" required>
   <input type="tel" id="phone" placeholder="เบอร์โทร" required>
-
   <button type="submit">ลงทะเบียน</button>
 </form>
 
 <p id="status"></p>
 
-
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwgjmM36XT3mLgB5exLxe9mcHvGEB2UtbuAyzLOieMm74Wqe2oI6xe-8ihVIsfiDF_eWw/exec"; // ← URL จาก Apps Script
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwgjmM36XT3mLgB5exLxe9mcHvGEB2UtbuAyzLOieMm74Wqe2oI6xe-8ihVIsfiDF_eWw/exec";
 
 let profile = {};
 
@@ -43,10 +41,19 @@ liff.init({ liffId: LIFF_ID })
   })
   .then(p => {
     profile = p;
+    console.log("PROFILE OK", profile);
+  })
+  .catch(err => {
+    console.error("LIFF ERROR", err);
   });
 
 document.getElementById("regForm").addEventListener("submit", e => {
   e.preventDefault();
+
+  if (!profile.userId) {
+    alert("ยังโหลดข้อมูล LINE ไม่เสร็จ กรุณารอสักครู่");
+    return;
+  }
 
   const payload = {
     userId: profile.userId,
@@ -57,14 +64,23 @@ document.getElementById("regForm").addEventListener("submit", e => {
     phone: document.getElementById("phone").value
   };
 
+  console.log("SEND", payload);
+
   fetch(GAS_URL, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify(payload)
   })
   .then(res => res.json())
   .then(() => {
     document.getElementById("status").innerText =
       "✅ ลงทะเบียนสำเร็จ รอการอนุมัติจากผู้ดูแล";
+  })
+  .catch(err => {
+    console.error(err);
+    alert("เกิดข้อผิดพลาด");
   });
 });
 </script>
