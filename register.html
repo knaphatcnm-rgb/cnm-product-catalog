@@ -2,91 +2,31 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Register CNM</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<style>
-body{font-family:sans-serif;padding:16px}
-input,select,button{width:100%;margin:8px 0;padding:10px}
-button{background:#06c755;color:#fff;border:none}
-</style>
 </head>
 <body>
-
-<h2>ลงทะเบียนพนักงาน CNM</h2>
-
-<form id="regForm">
-  <input type="text" id="full_name" placeholder="ชื่อ-นามสกุล" required>
-  <input type="text" id="employee_id" placeholder="รหัสพนักงาน" required>
-  <input type="text" id="department" placeholder="แผนก" required>
-  <input type="tel" id="phone" placeholder="เบอร์โทร" required>
-  <button type="submit">ลงทะเบียน</button>
-</form>
-
-<p id="status"></p>
-
+กำลังเปิดแบบฟอร์ม...
 <script>
-const LIFF_ID = "2008736700-X7cUjaUv";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzMhsCsjsumuadZwHwAYtdtJnlnamMboK6O4Qvz2vd7nEs3b2udI7R4Wc7S7xaV0e4-/exec";
+const LIFF_ID = "LIFF_ID_ของคุณ";
+const FORM_URL =
+  "https://docs.google.com/forms/d/e/FORM_ID/viewform";
 
-let profile = null;
-
-async function initLIFF() {
-  await liff.init({ liffId: LIFF_ID });
-
+liff.init({ liffId: LIFF_ID }).then(async () => {
   if (!liff.isLoggedIn()) {
     liff.login();
     return;
   }
 
-  profile = await liff.getProfile();
-}
+  const profile = await liff.getProfile();
 
-initLIFF();
+  const url =
+    FORM_URL +
+    "?entry.111111=" + encodeURIComponent(profile.userId) +
+    "&entry.222222=" + encodeURIComponent(profile.displayName);
 
-document.getElementById("regForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  if (!profile) {
-    alert("กำลังโหลดข้อมูล LINE กรุณารอสักครู่");
-    return;
-  }
-
-  document.getElementById("status").innerText = "⏳ กำลังบันทึกข้อมูล...";
-
-  const payload = {
-    userId: profile.userId,
-    displayName: profile.displayName,
-    full_name: document.getElementById("full_name").value,
-    employee_id: document.getElementById("employee_id").value,
-    department: document.getElementById("department").value,
-    phone: document.getElementById("phone").value
-  };
-
-  try {
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await res.json();
-
-    if (result.success) {
-      document.getElementById("status").innerText =
-        "✅ ลงทะเบียนสำเร็จ\n⏱ รอผู้ดูแลอนุมัติ";
-    } else {
-      throw new Error("Server error");
-    }
-  } catch (err) {
-    console.error(err);
-    document.getElementById("status").innerText =
-      "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
-  }
+  window.location.href = url;
 });
-
 </script>
-
-
 </body>
 </html>
