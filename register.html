@@ -9,11 +9,9 @@
 กำลังเปิดแบบฟอร์ม...
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
-const FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSdZnaIA6kRDuSXkhahUE60seFFcsq7_03EN4hqHNvFGvm53BQ/viewform";
+const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdZnaIA6kRDuSXkhahUE60seFFcsq7_03EN4hqHNvFGvm53BQ/viewform";
 
 liff.init({ liffId: LIFF_ID }).then(async () => {
-
   if (!liff.isLoggedIn()) {
     liff.login();
     return;
@@ -21,17 +19,16 @@ liff.init({ liffId: LIFF_ID }).then(async () => {
 
   const profile = await liff.getProfile();
 
+  console.log("LINE PROFILE", profile); // ใช้ debug
+
   const url =
     FORM_URL +
     "?entry.1200566864=" + encodeURIComponent(profile.userId) +
     "&entry.990463623=" + encodeURIComponent(profile.displayName);
 
-  // เปิด Google Form แบบถูกต้องใน LINE
-  liff.openWindow({
-    url: url,
-    external: true
-  });
+  window.location.replace(url);
 });
 </script>
+
 </body>
 </html>
