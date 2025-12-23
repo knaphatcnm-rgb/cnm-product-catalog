@@ -7,12 +7,15 @@
 </head>
 <body>
 กำลังเปิดแบบฟอร์ม...
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
 const FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSdZnaIA6kRDuSXkhahUE60seFFcsq7_03EN4hqHNvFGvm53BQ/viewform";
 
-liff.init({ liffId: LIFF_ID }).then(async () => {
+async function start() {
+  await liff.init({ liffId: LIFF_ID });
+
   if (!liff.isLoggedIn()) {
     liff.login();
     return;
@@ -22,11 +25,14 @@ liff.init({ liffId: LIFF_ID }).then(async () => {
 
   const url =
     FORM_URL +
-    "?entry.1766486008253=" + encodeURIComponent(profile.userId) +
-    "&entry.1308741008=" + encodeURIComponent(profile.displayName);
+    "?entry.1308741008=" + encodeURIComponent(profile.userId) +
+    "&entry.176648608253=" + encodeURIComponent(profile.displayName);
 
+  // ใช้ replace ดีกว่า href
   window.location.replace(url);
-});
+}
+
+start();
 </script>
 
 
