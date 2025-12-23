@@ -52,7 +52,9 @@ document.getElementById("regForm").addEventListener("submit", async (e) => {
     return;
   }
 
-  const payload = 
+  document.getElementById("status").innerText = "⏳ กำลังบันทึกข้อมูล...";
+
+  const payload = {
     userId: profile.userId,
     displayName: profile.displayName,
     full_name: document.getElementById("full_name").value,
@@ -61,14 +63,10 @@ document.getElementById("regForm").addEventListener("submit", async (e) => {
     phone: document.getElementById("phone").value
   };
 
-  console.log("SEND", payload);
-
   try {
     const res = await fetch(GAS_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
@@ -76,15 +74,17 @@ document.getElementById("regForm").addEventListener("submit", async (e) => {
 
     if (result.success) {
       document.getElementById("status").innerText =
-        "✅ ลงทะเบียนสำเร็จ รอการอนุมัติจากผู้ดูแล";
+        "✅ ลงทะเบียนสำเร็จ\n⏱ รอผู้ดูแลอนุมัติ";
     } else {
       throw new Error("Server error");
     }
   } catch (err) {
     console.error(err);
-    alert("❌ เกิดข้อผิดพลาดในการลงทะเบียน");
+    document.getElementById("status").innerText =
+      "❌ เกิดข้อผิดพลาด กรุณาลองใหม่";
   }
 });
+
 </script>
 
 
