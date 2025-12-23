@@ -10,7 +10,7 @@
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
 const FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSdZnaIA6kRDuSXkhahUE60seFFcsq7_03EN4hqHNvFGvm53BQ/viewform";
+  "https://docs.google.com/forms/d/e/FORM_ID/viewform";
 
 liff.init({ liffId: LIFF_ID }).then(async () => {
 
@@ -21,13 +21,12 @@ liff.init({ liffId: LIFF_ID }).then(async () => {
 
   const profile = await liff.getProfile();
 
-  // (ถ้าจะส่ง userId เข้า Form)
   const url =
     FORM_URL +
-    "?entry.111111=" + encodeURIComponent(profile.userId) +
-    "&entry.222222=" + encodeURIComponent(profile.displayName);
+    "?entry.1200566864=" + encodeURIComponent(profile.userId) +
+    "&entry.990463623=" + encodeURIComponent(profile.displayName);
 
-  // ✅ เปิด Google Form แบบถูกต้อง
+  // เปิด Google Form แบบถูกต้องใน LINE
   liff.openWindow({
     url: url,
     external: true
