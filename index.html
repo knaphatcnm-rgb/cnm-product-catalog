@@ -155,11 +155,64 @@ fetch(CSV_URL)
 
 
 
+<!-- LIFF SDK -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<script>
+const LIFF_ID = "2008736700-X7cUjaUv";
+const SHEET_URL =
+  "https://opensheet.elk.sh/1E0INtYPUHooDTuOm1KtU8UTHpcYIr9bOLODZqxuL0/Form_Responses";
+
+async function checkAccess() {
+  await liff.init({ liffId: LIFF_ID });
+
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
+
+  const profile = await liff.getProfile();
+  const myName = profile.displayName;
+
+  const res = await fetch(SHEET_URL);
+  const rows = await res.json();
+
+  const user = rows.find(r =>
+    r["LINE Display Name"] === myName
+  );
+
+  const lock = document.getElementById("lock");
+  const catalog = document.getElementById("catalog");
+
+  if (!user) {
+    lock.innerHTML = `
+      <h2>❌ ไม่พบข้อมูลการลงทะเบียน</h2>
+      <p>กรุณาลงทะเบียนก่อนใช้งาน</p>
+    `;
+    return;
+  }
+
+  if (user.status !== "approved") {
+    lock.innerHTML = `
+      <h2>⏳ รอการอนุมัติ</h2>
+      <p>สถานะปัจจุบัน: ${user.status}</p>
+    `;
+    return;
+  }
+
+  // ✅ ผ่านการอนุมัติ
+  lock.style.display = "none";
+  catalog.style.display = "block";
+}
+
+checkAccess();
+</script>
 
 
 
 </body>
 </html>
+
 
 
 
