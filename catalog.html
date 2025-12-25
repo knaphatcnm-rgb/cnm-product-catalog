@@ -173,11 +173,35 @@ document.getElementById("searchInput").addEventListener("keypress", e=>{
 });
 
 function doSearch(){
-  const kw=document.getElementById("searchInput").value.trim().toLowerCase();
-  if(kw.length<2){
+  const kw = document
+    .getElementById("searchInput")
+    .value
+    .trim()
+    .toLowerCase();
+
+  // 👉 ถ้าไม่พิมพ์อะไร = แสดงทั้งหมด
+  if(kw === ""){
+    renderProducts(PRODUCTS);
+    return;
+  }
+
+  // 👉 ถ้าพิมพ์แต่สั้นเกิน
+  if(kw.length < 2){
     alert("กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร");
     return;
   }
+
+  const result = PRODUCTS.filter(p=>{
+    return (
+      (p.Code || "").toLowerCase().includes(kw) ||
+      (p.NAME || "").toLowerCase().includes(kw) ||
+      (p.product_tags || "").toLowerCase().includes(kw)
+    );
+  });
+
+  renderProducts(result);
+}
+
 
   const result=PRODUCTS.filter(p=>{
     return (
