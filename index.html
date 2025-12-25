@@ -2,61 +2,55 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>CNM Access</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <title>CNM – Checking Access</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-
 <body>
 กำลังตรวจสอบสิทธิ์...
 
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
+/* ================= CONFIG ================= */
 const LIFF_ID = "2008736700-X7cUjaUv";
-const API_URL = "https://script.google.com/macros/s/AKfycbxio7JQBKgdmO5r7sR8KIO1e60DYGP3SLPNefzDVrgouf9zjzKO4HRABBSlg7Kiwenw/exec";
 
-async function start() {
-  try {
-    await liff.init({ liffId: LIFF_ID });
+/* 🔑 รายชื่อ LINE User ID ที่อนุมัติแล้ว (ถาวร) */
+const APPROVED_USER_IDS = [
+  "U41d948c298e7ed3c0806dda1e6cce287",
+  "Uc6cc04e19093f52a05b83d674ec853d3"
+];
 
-    // ต้องเปิดผ่าน LINE เท่านั้น
-    if (!liff.isInClient()) {
-      document.body.innerText =
-        "กรุณาเปิดผ่าน LINE Official Account เท่านั้น";
-      return;
-    }
+/* ================= LOGIC ================= */
+async function main() {
+  await liff.init({ liffId: LIFF_ID });
 
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
+  // 🔒 บังคับเปิดผ่าน LINE OA
+  if (!liff.isInClient()) {
+    document.body.innerText =
+      "กรุณาเปิดผ่าน LINE Official Account เท่านั้น";
+    return;
+  }
 
-    const profile = await liff.getProfile();
-    const userId = profile.userId;
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
 
-    if (!userId) {
-      document.body.innerText = "ไม่สามารถดึง LINE User ID ได้";
-      return;
-    }
+  const profile = await liff.getProfile();
+  const userId = profile.userId;
 
-    const res = await fetch(
-      API_URL + "?userId=" + encodeURIComponent(userId),
-      { cache: "no-store" }
-    );
+  console.log("LOGIN USER ID:", userId);
 
-    const result = await res.json();
-
-    if (result.allowed === true) {
-      location.replace("catalog.html");
-    } else {
-      document.body.innerText =
-        "⏳ ยังไม่ได้รับสิทธิ์ใช้งาน\nกรุณาติดต่อผู้ดูแลระบบ";
-    }
-
-  } catch (err) {
-    document.body.innerText = "เกิดข้อผิดพลาด: " + err.message;
+  if (APPROVED_USER_IDS.includes(userId)) {
+    // ✅ ผ่าน → เข้า Catalog
+    location.replace("catalog.html");
+  } else {
+    // ❌ ไม่ผ่าน → แจ้งสถานะ
+    document.body.innerText =
+      "⏳ ยังไม่ได้รับสิทธิ์ใช้งาน\nกรุณาติดต่อผู้ดูแลระบบ";
   }
 }
 
-start();
+main();
 </script>
 </body>
 </html>
