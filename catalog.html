@@ -69,7 +69,6 @@
       border-radius:10px;
       text-decoration:none;
       font-size:14px;
-      margin-top:6px;
     }
   </style>
 </head>
@@ -80,8 +79,11 @@
 
 <div class="container">
   <div class="search-box">
-    <input id="searchInput" type="text"
-      placeholder="ค้นหาชื่อ / รหัส / แท็กสินค้า">
+    <input
+      id="searchInput"
+      type="text"
+      placeholder="ค้นหาชื่อ / รหัส / แท็กสินค้า"
+    >
     <button id="searchBtn">ค้นหา</button>
   </div>
 
@@ -128,6 +130,7 @@ fetch(CSV_URL)
       PRODUCTS.push(p);
     });
 
+    // 👉 แสดงสินค้าทั้งหมดตอนเปิดหน้า
     renderProducts(PRODUCTS);
   });
 
@@ -142,14 +145,12 @@ function renderProducts(list){
   }
 
   list.forEach(p=>{
-    /* ===== รูป ===== */
-    let img="";
-    if(p["Drive_raw"]){
-      const m=p["Drive_raw"].match(/\/d\/([^/]+)/);
+    let img=p.image_url||"";
+    if(!img && p.Drive_raw){
+      const m=p.Drive_raw.match(/\/d\/([^/]+)/);
       if(m) img=`https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
     }
 
-    /* ===== ราคา ===== */
     const price=Number((p["ราคา"]||"").replace(/,/g,""));
     const priceText=!isNaN(price)?price.toLocaleString()+" บาท":"";
 
@@ -157,14 +158,11 @@ function renderProducts(list){
       <div class="card">
         <img src="${img}" onerror="this.style.display='none'">
         <div class="content">
-          <div class="code">${p["Code"]||""}</div>
-          <div class="name">${p["NAME"]||""}</div>
+          <div class="code">${p.Code||""}</div>
+          <div class="name">${p.NAME||""}</div>
           <div class="size">${p["ขนาด"]||""}</div>
           <div class="price">${priceText}</div>
-
-          <a class="btn"
-             href="${p["LINK"] || p["Drive_raw"] || "#"}"
-             target="_blank">
+          <a class="btn" href="${p.LINK||"#"}" target="_blank">
             ดูรายละเอียดสินค้า
           </a>
         </div>
@@ -173,242 +171,46 @@ function renderProducts(list){
   });
 }
 
-/* ================= SEARCH ================= */
+/* ================= SEARCH EVENTS ================= */
 document.getElementById("searchBtn").addEventListener("click", doSearch);
+
 document.getElementById("searchInput").addEventListener("keypress", e=>{
-  if(e.key==="Enter") doSearch();
+  if(e.key === "Enter") doSearch();
 });
+
+// ⭐ สำคัญ: ลบคำค้นจนว่าง → แสดงทั้งหมด
 document.getElementById("searchInput").addEventListener("input", e=>{
-  if(e.target.value.trim()===""){
+  if(e.target.value.trim() === ""){
     renderProducts(PRODUCTS);
   }
 });
 
+/* ================= SEARCH LOGIC ================= */
 function doSearch(){
-  const kw=document.getElementById("searchInput").value.trim().toLowerCase();
-  if(kw===""){
+  const kw = document
+    .getElementById("searchInput")
+    .value
+    .trim()
+    .toLowerCase();
+
+  // ไม่พิมพ์อะไร → แสดงทั้งหมด
+  if(kw === ""){
     renderProducts(PRODUCTS);
     return;
   }
-  if(kw.length<2){
+
+  if(kw.length < 2){
     alert("กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร");
     return;
   }
 
-  const result=PRODUCTS.filter(p=>(
-    (p["Code"]||"").toLowerCase().includes(kw) ||
-    (p["NAME"]||"").toLowerCase().includes(kw) ||
-    (p["product_tags"]||"").toLowerCase().includes(kw)
-  ));
-
-  renderProducts(result);
-}
-</script>
-
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CNM Interior – Product Catalog</title>
-
-  <style>
-    body{
-      margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:#f4f4f4;
-      color:#333;
-    }
-    header{
-      background:#111;
-      color:#fff;
-      padding:16px;
-      text-align:center;
-      font-size:18px;
-    }
-    .container{ padding:12px; }
-
-    .search-box{
-      display:flex;
-      gap:8px;
-      margin-bottom:12px;
-    }
-    .search-box input{
-      flex:1;
-      padding:12px;
-      font-size:15px;
-      border-radius:10px;
-      border:1px solid #ccc;
-    }
-    .search-box button{
-      padding:12px 16px;
-      font-size:15px;
-      border-radius:10px;
-      border:none;
-      background:#0a7cff;
-      color:#fff;
-    }
-
-    .card{
-      background:#fff;
-      border-radius:14px;
-      margin-bottom:16px;
-      overflow:hidden;
-      box-shadow:0 6px 18px rgba(0,0,0,.08);
-    }
-    .card img{
-      width:100%;
-      height:220px;
-      object-fit:cover;
-      background:#eee;
-    }
-    .content{ padding:14px; }
-    .code{ font-size:12px;color:#888; }
-    .name{ font-size:16px;font-weight:600;margin:6px 0; }
-    .size{ font-size:14px;color:#555;margin-bottom:8px; }
-    .price{ font-size:18px;font-weight:700;color:#0a7cff;margin-bottom:10px; }
-    .btn{
-      display:block;
-      text-align:center;
-      padding:10px;
-      background:#0a7cff;
-      color:#fff;
-      border-radius:10px;
-      text-decoration:none;
-      font-size:14px;
-      margin-top:6px;
-    }
-  </style>
-</head>
-
-<body>
-
-<header>CNM Interior Product Catalog</header>
-
-<div class="container">
-  <div class="search-box">
-    <input id="searchInput" type="text"
-      placeholder="ค้นหาชื่อ / รหัส / แท็กสินค้า">
-    <button id="searchBtn">ค้นหา</button>
-  </div>
-
-  <div id="products"></div>
-</div>
-
-<script>
-/* ================= CONFIG ================= */
-const CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDhv-ti8VG4RV7TjgJqVz4kMRuWcY_nbqhcvW6WdjPUJwa4T6qFNUHBq47RjN5wDGRtKdI23BpdKpl/pub?output=csv";
-
-/* ================= STATE ================= */
-let PRODUCTS = [];
-
-/* ================= CSV PARSER ================= */
-function parseCSV(text){
-  const rows=[];
-  let row=[], val="", q=false;
-  for(let i=0;i<text.length;i++){
-    const c=text[i], n=text[i+1];
-    if(c=='"'&&n=='"'){ val+='"'; i++; }
-    else if(c=='"'){ q=!q; }
-    else if(c==','&&!q){ row.push(val); val=""; }
-    else if((c=='\n'||c=='\r')&&!q){
-      if(val||row.length) row.push(val);
-      if(row.length) rows.push(row);
-      row=[]; val="";
-    } else val+=c;
-  }
-  if(val||row.length){ row.push(val); rows.push(row); }
-  return rows;
-}
-
-/* ================= LOAD DATA ================= */
-fetch(CSV_URL)
-  .then(r=>r.text())
-  .then(text=>{
-    const rows=parseCSV(text);
-    const headers=rows.shift();
-
-    rows.forEach(row=>{
-      const p={};
-      headers.forEach((h,i)=>p[h]=(row[i]||"").trim());
-      PRODUCTS.push(p);
-    });
-
-    renderProducts(PRODUCTS);
+  const result = PRODUCTS.filter(p=>{
+    return (
+      (p.Code || "").toLowerCase().includes(kw) ||
+      (p.NAME || "").toLowerCase().includes(kw) ||
+      (p.product_tags || "").toLowerCase().includes(kw)
+    );
   });
-
-/* ================= RENDER ================= */
-function renderProducts(list){
-  const box=document.getElementById("products");
-  box.innerHTML="";
-
-  if(list.length===0){
-    box.innerHTML="<p>ไม่พบสินค้า</p>";
-    return;
-  }
-
-  list.forEach(p=>{
-    /* ===== รูป ===== */
-    let img="";
-    if(p["Drive_raw"]){
-      const m=p["Drive_raw"].match(/\/d\/([^/]+)/);
-      if(m) img=`https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
-    }
-
-    /* ===== ราคา ===== */
-    const price=Number((p["ราคา"]||"").replace(/,/g,""));
-    const priceText=!isNaN(price)?price.toLocaleString()+" บาท":"";
-
-    box.insertAdjacentHTML("beforeend",`
-      <div class="card">
-        <img src="${img}" onerror="this.style.display='none'">
-        <div class="content">
-          <div class="code">${p["Code"]||""}</div>
-          <div class="name">${p["NAME"]||""}</div>
-          <div class="size">${p["ขนาด"]||""}</div>
-          <div class="price">${priceText}</div>
-
-          <a class="btn"
-             href="${p["LINK"] || p["Drive_raw"] || "#"}"
-             target="_blank">
-            ดูรายละเอียดสินค้า
-          </a>
-        </div>
-      </div>
-    `);
-  });
-}
-
-/* ================= SEARCH ================= */
-document.getElementById("searchBtn").addEventListener("click", doSearch);
-document.getElementById("searchInput").addEventListener("keypress", e=>{
-  if(e.key==="Enter") doSearch();
-});
-document.getElementById("searchInput").addEventListener("input", e=>{
-  if(e.target.value.trim()===""){
-    renderProducts(PRODUCTS);
-  }
-});
-
-function doSearch(){
-  const kw=document.getElementById("searchInput").value.trim().toLowerCase();
-  if(kw===""){
-    renderProducts(PRODUCTS);
-    return;
-  }
-  if(kw.length<2){
-    alert("กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร");
-    return;
-  }
-
-  const result=PRODUCTS.filter(p=>(
-    (p["Code"]||"").toLowerCase().includes(kw) ||
-    (p["NAME"]||"").toLowerCase().includes(kw) ||
-    (p["product_tags"]||"").toLowerCase().includes(kw)
-  ));
 
   renderProducts(result);
 }
