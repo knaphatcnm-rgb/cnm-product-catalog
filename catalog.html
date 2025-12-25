@@ -165,6 +165,15 @@ function renderProducts(list){
           <a class="btn" href="${p.LINK||"#"}" target="_blank">
             ดูรายละเอียดสินค้า
           </a>
+          
+          ${p.model_3d ? `
+  <a class="btn"
+     href="viewer-3d.html?model=${encodeURIComponent(p.model_3d)}"
+     target="_blank">
+     แสดง 3D
+  </a>
+` : ""}
+
         </div>
       </div>
     `);
