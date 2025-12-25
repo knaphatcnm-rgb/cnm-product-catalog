@@ -3,41 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <title>Register CNM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
+
 กำลังเปิดแบบฟอร์มลงทะเบียน...
 
 <script>
-const LIFF_ID = "2008736700-X7cUjaUv";
-const FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSdZnaIA6kRDuSXkhahUE60seFFcsq7_03EN4hqHNvFGvm53BQ/viewform";
+/* ================= CONFIG ================= */
+const LIFF_ID = = "2008736700-X7cUjaUv";
 
-// ✅ จากภาพล่าสุด ยืนยันแล้วว่าอันนี้ถูกต้อง
-const ENTRY_LINE_USER_ID = "entry.1308741008";
+/* Google Form (ตัวที่คุณเปิดในภาพล่าสุด) */
+const FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLScnxbS7laYzC0x3locjp6_UxI9ELu37ywcTOcMXsmzggKng/viewform";
+
+/* 🔥 entry ที่ถูกต้องจาก DevTools */
+const ENTRY_LINE_USER_ID = "entry.1707622273";
+/* ========================================= */
 
 async function start() {
-  await liff.init({ liffId: LIFF_ID });
+  try {
+    await liff.init({ liffId: LIFF_ID });
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    const profile = await liff.getProfile();
+
+    const userId = profile.userId;
+
+    if (!userId) {
+      alert("ไม่พบ LINE User ID");
+      return;
+    }
+
+    const url =
+      FORM_URL +
+      "?" +
+      ENTRY_LINE_USER_ID +
+      "=" +
+      encodeURIComponent(userId);
+
+    // redirect แบบไม่ย้อนกลับ
+    window.location.replace(url);
+
+  } catch (err) {
+    console.error(err);
+    alert("เกิดข้อผิดพลาดในการเปิดฟอร์ม");
   }
-
-  const profile = await liff.getProfile();
-
-  console.log("LINE USER ID =", profile.userId);
-
-  // 🔒 ส่งแค่ค่าเดียว
-  const url =
-    FORM_URL +
-    "?" + ENTRY_LINE_USER_ID + "=" + encodeURIComponent(profile.userId);
-
-  // redirect แบบไม่ย้อนกลับ
-  window.location.replace(url);
 }
 
 start();
 </script>
+
 </body>
 </html>
