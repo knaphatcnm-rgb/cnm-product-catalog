@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>CNM Access</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
@@ -11,14 +11,13 @@
 
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbwTtpUoj23tZCpHJeUrer4M0iNZVpfIrrO42_jjfDuXczTSM19VDRzv7Ny1QD7BguHt/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby-ePuO6rIdpJi9qNAYdXdwdaJ66YEiNNKvlFkYtuzT6daV0eBtTBqodlpHNlWn_aej/exec";
 
 async function start() {
   try {
     await liff.init({ liffId: LIFF_ID });
 
-    // 🔒 บังคับเปิดผ่าน LINE App
+    // บังคับเปิดจาก LINE เท่านั้น
     if (!liff.isInClient()) {
       document.body.innerText =
         "กรุณาเปิดผ่าน LINE Official Account เท่านั้น";
@@ -30,42 +29,25 @@ async function start() {
       return;
     }
 
-    // ✅ จุดที่ขาดไป
     const profile = await liff.getProfile();
     const userId = profile.userId;
 
-    if (!userId) {
-      document.body.innerText = "ไม่สามารถดึง LINE User ID ได้";
-      return;
-    }
-
-    const res = await fetch(API_URL + "?userId=" + userId, {
+    const res = await fetch(API_URL + "?userId=" + encodeURIComponent(userId), {
       cache: "no-store"
     });
 
     const result = await res.json();
 
-    switch (result.status) {
-      case "approved":
-        location.replace("catalog.html");
-        break;
-
-      case "pending":
-        document.body.innerText =
-          "⏳ อยู่ระหว่างตรวจสอบสิทธิ์ กรุณารอผู้ดูแล";
-        break;
-
-      case "reject":
-        location.replace("register.html");
-        break;
-
-      default:
-        location.replace("register.html");
+    if (result.allowed === true) {
+      location.replace("catalog.html");
+    } else {
+      document.body.innerText =
+        "⏳ ยังไม่ได้รับสิทธิ์ใช้งาน\nกรุณาติดต่อผู้ดูแลระบบ";
     }
 
   } catch (err) {
     document.body.innerText =
-      "เกิดข้อผิดพลาด: " + err.message;
+      "เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์\n" + err.message;
   }
 }
 
@@ -73,4 +55,3 @@ start();
 </script>
 </body>
 </html>
-
