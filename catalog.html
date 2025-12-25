@@ -79,7 +79,11 @@
 
 <div class="container">
   <div class="search-box">
-    <input id="searchInput" type="text" placeholder="ค้นหาชื่อ / รหัส / แท็กสินค้า">
+    <input
+      id="searchInput"
+      type="text"
+      placeholder="ค้นหาชื่อ / รหัส / แท็กสินค้า"
+    >
     <button id="searchBtn">ค้นหา</button>
   </div>
 
@@ -126,6 +130,7 @@ fetch(CSV_URL)
       PRODUCTS.push(p);
     });
 
+    // 👉 แสดงสินค้าทั้งหมดตอนเปิดหน้า
     renderProducts(PRODUCTS);
   });
 
@@ -166,12 +171,21 @@ function renderProducts(list){
   });
 }
 
-/* ================= SEARCH ================= */
+/* ================= SEARCH EVENTS ================= */
 document.getElementById("searchBtn").addEventListener("click", doSearch);
+
 document.getElementById("searchInput").addEventListener("keypress", e=>{
-  if(e.key==="Enter") doSearch();
+  if(e.key === "Enter") doSearch();
 });
 
+// ⭐ สำคัญ: ลบคำค้นจนว่าง → แสดงทั้งหมด
+document.getElementById("searchInput").addEventListener("input", e=>{
+  if(e.target.value.trim() === ""){
+    renderProducts(PRODUCTS);
+  }
+});
+
+/* ================= SEARCH LOGIC ================= */
 function doSearch(){
   const kw = document
     .getElementById("searchInput")
@@ -179,13 +193,12 @@ function doSearch(){
     .trim()
     .toLowerCase();
 
-  // 👉 ถ้าไม่พิมพ์อะไร = แสดงทั้งหมด
+  // ไม่พิมพ์อะไร → แสดงทั้งหมด
   if(kw === ""){
     renderProducts(PRODUCTS);
     return;
   }
 
-  // 👉 ถ้าพิมพ์แต่สั้นเกิน
   if(kw.length < 2){
     alert("กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร");
     return;
@@ -196,18 +209,6 @@ function doSearch(){
       (p.Code || "").toLowerCase().includes(kw) ||
       (p.NAME || "").toLowerCase().includes(kw) ||
       (p.product_tags || "").toLowerCase().includes(kw)
-    );
-  });
-
-  renderProducts(result);
-}
-
-
-  const result=PRODUCTS.filter(p=>{
-    return (
-      (p.Code||"").toLowerCase().includes(kw) ||
-      (p.NAME||"").toLowerCase().includes(kw) ||
-      (p.product_tags||"").toLowerCase().includes(kw)
     );
   });
 
