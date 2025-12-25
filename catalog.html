@@ -2,208 +2,416 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>CNM 3D Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Babylon.js -->
-  <script src="https://cdn.babylonjs.com/babylon.js"></script>
-  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CNM Interior – Product Catalog</title>
 
   <style>
-    html, body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #111;
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:#f4f4f4;
+      color:#333;
+    }
+    header{
+      background:#111;
+      color:#fff;
+      padding:16px;
+      text-align:center;
+      font-size:18px;
+    }
+    .container{ padding:12px; }
+
+    .search-box{
+      display:flex;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .search-box input{
+      flex:1;
+      padding:12px;
+      font-size:15px;
+      border-radius:10px;
+      border:1px solid #ccc;
+    }
+    .search-box button{
+      padding:12px 16px;
+      font-size:15px;
+      border-radius:10px;
+      border:none;
+      background:#0a7cff;
+      color:#fff;
     }
 
-    #renderCanvas {
-      width: 100%;
-      height: 100%;
-      touch-action: none;
-      display: block;
+    .card{
+      background:#fff;
+      border-radius:14px;
+      margin-bottom:16px;
+      overflow:hidden;
+      box-shadow:0 6px 18px rgba(0,0,0,.08);
     }
-
-    #overlay {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-      color: #fff;
-      z-index: 10;
-      flex-direction: column;
-      gap: 12px;
-      text-align: center;
-      padding: 20px;
+    .card img{
+      width:100%;
+      height:220px;
+      object-fit:cover;
+      background:#eee;
     }
-
-    #overlay.hidden {
-      display: none;
-    }
-
-    .spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid #444;
-      border-top-color: #0a7cff;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    #toolbar {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      z-index: 20;
-      display: flex;
-      gap: 8px;
-    }
-
-    #toolbar button {
-      padding: 8px 12px;
-      font-size: 14px;
-      border: none;
-      border-radius: 6px;
-      background: #0a7cff;
-      color: #fff;
-    }
-
-    #errorBox {
-      color: #ff6b6b;
-      font-size: 15px;
-      line-height: 1.4;
+    .content{ padding:14px; }
+    .code{ font-size:12px;color:#888; }
+    .name{ font-size:16px;font-weight:600;margin:6px 0; }
+    .size{ font-size:14px;color:#555;margin-bottom:8px; }
+    .price{ font-size:18px;font-weight:700;color:#0a7cff;margin-bottom:10px; }
+    .btn{
+      display:block;
+      text-align:center;
+      padding:10px;
+      background:#0a7cff;
+      color:#fff;
+      border-radius:10px;
+      text-decoration:none;
+      font-size:14px;
+      margin-top:6px;
     }
   </style>
 </head>
 
 <body>
 
-<div id="overlay">
-  <div class="spinner"></div>
-  <div id="statusText">กำลังโหลดโมเดล 3D...</div>
-  <div id="errorBox"></div>
-</div>
+<header>CNM Interior Product Catalog</header>
 
-<div id="toolbar">
-  <button onclick="resetCamera()">รีเซ็ตมุมมอง</button>
-</div>
+<div class="container">
+  <div class="search-box">
+    <input id="searchInput" type="text"
+      placeholder="ค้นหาชื่อ / รหัส / แท็กสินค้า">
+    <button id="searchBtn">ค้นหา</button>
+  </div>
 
-<canvas id="renderCanvas"></canvas>
+  <div id="products"></div>
+</div>
 
 <script>
-/* ================= BASIC ================= */
-const canvas = document.getElementById("renderCanvas");
-const engine = new BABYLON.Engine(canvas, true);
-const overlay = document.getElementById("overlay");
-const statusText = document.getElementById("statusText");
-const errorBox = document.getElementById("errorBox");
+/* ================= CONFIG ================= */
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDhv-ti8VG4RV7TjgJqVz4kMRuWcY_nbqhcvW6WdjPUJwa4T6qFNUHBq47RjN5wDGRtKdI23BpdKpl/pub?output=csv";
 
-/* ================= SCENE ================= */
-const scene = new BABYLON.Scene(engine);
-scene.clearColor = new BABYLON.Color4(0.95, 0.95, 0.95, 1);
+/* ================= STATE ================= */
+let PRODUCTS = [];
 
-/* ================= CAMERA ================= */
-const camera = new BABYLON.ArcRotateCamera(
-  "camera",
-  Math.PI / 2,
-  Math.PI / 2.5,
-  6,
-  BABYLON.Vector3.Zero(),
-  scene
-);
-camera.attachControl(canvas, true);
-camera.wheelDeltaPercentage = 0.01;
-
-/* ================= LIGHT ================= */
-new BABYLON.HemisphericLight(
-  "light",
-  new BABYLON.Vector3(0, 1, 0),
-  scene
-).intensity = 0.9;
-
-/* ================= GET MODEL URL ================= */
-const params = new URLSearchParams(window.location.search);
-const modelUrl = params.get("model");
-
-/* ================= VALIDATION ================= */
-if (!modelUrl) {
-  showError("ไม่พบลิงก์ไฟล์ 3D\nกรุณาเปิดจาก Catalog");
-} else if (!modelUrl.match(/\.(gltf|glb)(\?|$)/i)) {
-  showError("ไฟล์ไม่ใช่ .gltf หรือ .glb");
-} else {
-  loadModel(modelUrl);
+/* ================= CSV PARSER ================= */
+function parseCSV(text){
+  const rows=[];
+  let row=[], val="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(c=='"'&&n=='"'){ val+='"'; i++; }
+    else if(c=='"'){ q=!q; }
+    else if(c==','&&!q){ row.push(val); val=""; }
+    else if((c=='\n'||c=='\r')&&!q){
+      if(val||row.length) row.push(val);
+      if(row.length) rows.push(row);
+      row=[]; val="";
+    } else val+=c;
+  }
+  if(val||row.length){ row.push(val); rows.push(row); }
+  return rows;
 }
 
-/* ================= LOAD MODEL ================= */
-function loadModel(url) {
-  statusText.textContent = "กำลังโหลดไฟล์ 3D...";
-  BABYLON.SceneLoader.Append(
-    "",
-    url,
-    scene,
-    () => {
-      overlay.classList.add("hidden");
-      frameModel();
-    },
-    evt => {
-      if (evt.lengthComputable) {
-        const percent = Math.floor((evt.loaded / evt.total) * 100);
-        statusText.textContent = `กำลังโหลด ${percent}%`;
-      }
-    },
-    (scene, message) => {
-      showError(
-        "ไม่สามารถโหลดโมเดลได้\n" +
-        "สาเหตุที่พบบ่อย:\n" +
-        "- ลิงก์ Google Drive ไม่ใช่แบบ uc?id=\n" +
-        "- ไฟล์ยังไม่ตั้งค่า Share\n" +
-        "- texture หายหรือ path ผิด\n\n" +
-        "รายละเอียด:\n" + message
-      );
-    }
-  );
-}
+/* ================= LOAD DATA ================= */
+fetch(CSV_URL)
+  .then(r=>r.text())
+  .then(text=>{
+    const rows=parseCSV(text);
+    const headers=rows.shift();
 
-/* ================= HELPERS ================= */
-function frameModel() {
-  const meshes = scene.meshes.filter(m => m.name !== "__root__");
-  if (!meshes.length) return;
+    rows.forEach(row=>{
+      const p={};
+      headers.forEach((h,i)=>p[h]=(row[i]||"").trim());
+      PRODUCTS.push(p);
+    });
 
-  const merged = BABYLON.Mesh.MergeMeshes(
-    meshes,
-    true,
-    true,
-    undefined,
-    false,
-    true
-  );
-  const bounds = merged.getBoundingInfo();
-  camera.target = bounds.boundingBox.centerWorld;
-  camera.radius = bounds.boundingSphere.radiusWorld * 2.2;
-}
-
-function resetCamera() {
-  camera.setPosition(new BABYLON.Vector3(0, 3, -6));
-  camera.setTarget(BABYLON.Vector3.Zero());
-}
-
-function showError(msg) {
-  statusText.textContent = "เกิดข้อผิดพลาด";
-  errorBox.textContent = msg;
-  overlay.classList.remove("hidden");
-}
+    renderProducts(PRODUCTS);
+  });
 
 /* ================= RENDER ================= */
-engine.runRenderLoop(() => scene.render());
-window.addEventListener("resize", () => engine.resize());
+function renderProducts(list){
+  const box=document.getElementById("products");
+  box.innerHTML="";
+
+  if(list.length===0){
+    box.innerHTML="<p>ไม่พบสินค้า</p>";
+    return;
+  }
+
+  list.forEach(p=>{
+    /* ===== รูป ===== */
+    let img="";
+    if(p["Drive_raw"]){
+      const m=p["Drive_raw"].match(/\/d\/([^/]+)/);
+      if(m) img=`https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
+    }
+
+    /* ===== ราคา ===== */
+    const price=Number((p["ราคา"]||"").replace(/,/g,""));
+    const priceText=!isNaN(price)?price.toLocaleString()+" บาท":"";
+
+    box.insertAdjacentHTML("beforeend",`
+      <div class="card">
+        <img src="${img}" onerror="this.style.display='none'">
+        <div class="content">
+          <div class="code">${p["Code"]||""}</div>
+          <div class="name">${p["NAME"]||""}</div>
+          <div class="size">${p["ขนาด"]||""}</div>
+          <div class="price">${priceText}</div>
+
+          <a class="btn"
+             href="${p["LINK"] || p["Drive_raw"] || "#"}"
+             target="_blank">
+            ดูรายละเอียดสินค้า
+          </a>
+        </div>
+      </div>
+    `);
+  });
+}
+
+/* ================= SEARCH ================= */
+document.getElementById("searchBtn").addEventListener("click", doSearch);
+document.getElementById("searchInput").addEventListener("keypress", e=>{
+  if(e.key==="Enter") doSearch();
+});
+document.getElementById("searchInput").addEventListener("input", e=>{
+  if(e.target.value.trim()===""){
+    renderProducts(PRODUCTS);
+  }
+});
+
+function doSearch(){
+  const kw=document.getElementById("searchInput").value.trim().toLowerCase();
+  if(kw===""){
+    renderProducts(PRODUCTS);
+    return;
+  }
+  if(kw.length<2){
+    alert("กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร");
+    return;
+  }
+
+  const result=PRODUCTS.filter(p=>(
+    (p["Code"]||"").toLowerCase().includes(kw) ||
+    (p["NAME"]||"").toLowerCase().includes(kw) ||
+    (p["product_tags"]||"").toLowerCase().includes(kw)
+  ));
+
+  renderProducts(result);
+}
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CNM Interior – Product Catalog</title>
+
+  <style>
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:#f4f4f4;
+      color:#333;
+    }
+    header{
+      background:#111;
+      color:#fff;
+      padding:16px;
+      text-align:center;
+      font-size:18px;
+    }
+    .container{ padding:12px; }
+
+    .search-box{
+      display:flex;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .search-box input{
+      flex:1;
+      padding:12px;
+      font-size:15px;
+      border-radius:10px;
+      border:1px solid #ccc;
+    }
+    .search-box button{
+      padding:12px 16px;
+      font-size:15px;
+      border-radius:10px;
+      border:none;
+      background:#0a7cff;
+      color:#fff;
+    }
+
+    .card{
+      background:#fff;
+      border-radius:14px;
+      margin-bottom:16px;
+      overflow:hidden;
+      box-shadow:0 6px 18px rgba(0,0,0,.08);
+    }
+    .card img{
+      width:100%;
+      height:220px;
+      object-fit:cover;
+      background:#eee;
+    }
+    .content{ padding:14px; }
+    .code{ font-size:12px;color:#888; }
+    .name{ font-size:16px;font-weight:600;margin:6px 0; }
+    .size{ font-size:14px;color:#555;margin-bottom:8px; }
+    .price{ font-size:18px;font-weight:700;color:#0a7cff;margin-bottom:10px; }
+    .btn{
+      display:block;
+      text-align:center;
+      padding:10px;
+      background:#0a7cff;
+      color:#fff;
+      border-radius:10px;
+      text-decoration:none;
+      font-size:14px;
+      margin-top:6px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>CNM Interior Product Catalog</header>
+
+<div class="container">
+  <div class="search-box">
+    <input id="searchInput" type="text"
+      placeholder="ค้นหาชื่อ / รหัส / แท็กสินค้า">
+    <button id="searchBtn">ค้นหา</button>
+  </div>
+
+  <div id="products"></div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDhv-ti8VG4RV7TjgJqVz4kMRuWcY_nbqhcvW6WdjPUJwa4T6qFNUHBq47RjN5wDGRtKdI23BpdKpl/pub?output=csv";
+
+/* ================= STATE ================= */
+let PRODUCTS = [];
+
+/* ================= CSV PARSER ================= */
+function parseCSV(text){
+  const rows=[];
+  let row=[], val="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(c=='"'&&n=='"'){ val+='"'; i++; }
+    else if(c=='"'){ q=!q; }
+    else if(c==','&&!q){ row.push(val); val=""; }
+    else if((c=='\n'||c=='\r')&&!q){
+      if(val||row.length) row.push(val);
+      if(row.length) rows.push(row);
+      row=[]; val="";
+    } else val+=c;
+  }
+  if(val||row.length){ row.push(val); rows.push(row); }
+  return rows;
+}
+
+/* ================= LOAD DATA ================= */
+fetch(CSV_URL)
+  .then(r=>r.text())
+  .then(text=>{
+    const rows=parseCSV(text);
+    const headers=rows.shift();
+
+    rows.forEach(row=>{
+      const p={};
+      headers.forEach((h,i)=>p[h]=(row[i]||"").trim());
+      PRODUCTS.push(p);
+    });
+
+    renderProducts(PRODUCTS);
+  });
+
+/* ================= RENDER ================= */
+function renderProducts(list){
+  const box=document.getElementById("products");
+  box.innerHTML="";
+
+  if(list.length===0){
+    box.innerHTML="<p>ไม่พบสินค้า</p>";
+    return;
+  }
+
+  list.forEach(p=>{
+    /* ===== รูป ===== */
+    let img="";
+    if(p["Drive_raw"]){
+      const m=p["Drive_raw"].match(/\/d\/([^/]+)/);
+      if(m) img=`https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
+    }
+
+    /* ===== ราคา ===== */
+    const price=Number((p["ราคา"]||"").replace(/,/g,""));
+    const priceText=!isNaN(price)?price.toLocaleString()+" บาท":"";
+
+    box.insertAdjacentHTML("beforeend",`
+      <div class="card">
+        <img src="${img}" onerror="this.style.display='none'">
+        <div class="content">
+          <div class="code">${p["Code"]||""}</div>
+          <div class="name">${p["NAME"]||""}</div>
+          <div class="size">${p["ขนาด"]||""}</div>
+          <div class="price">${priceText}</div>
+
+          <a class="btn"
+             href="${p["LINK"] || p["Drive_raw"] || "#"}"
+             target="_blank">
+            ดูรายละเอียดสินค้า
+          </a>
+        </div>
+      </div>
+    `);
+  });
+}
+
+/* ================= SEARCH ================= */
+document.getElementById("searchBtn").addEventListener("click", doSearch);
+document.getElementById("searchInput").addEventListener("keypress", e=>{
+  if(e.key==="Enter") doSearch();
+});
+document.getElementById("searchInput").addEventListener("input", e=>{
+  if(e.target.value.trim()===""){
+    renderProducts(PRODUCTS);
+  }
+});
+
+function doSearch(){
+  const kw=document.getElementById("searchInput").value.trim().toLowerCase();
+  if(kw===""){
+    renderProducts(PRODUCTS);
+    return;
+  }
+  if(kw.length<2){
+    alert("กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร");
+    return;
+  }
+
+  const result=PRODUCTS.filter(p=>(
+    (p["Code"]||"").toLowerCase().includes(kw) ||
+    (p["NAME"]||"").toLowerCase().includes(kw) ||
+    (p["product_tags"]||"").toLowerCase().includes(kw)
+  ));
+
+  renderProducts(result);
+}
 </script>
 
 </body>
