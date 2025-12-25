@@ -71,6 +71,9 @@
       font-size:14px;
       margin-top:6px;
     }
+    .btn.secondary{
+      background:#00a36c;
+    }
   </style>
 </head>
 
@@ -143,7 +146,7 @@ function renderProducts(list){
 
   list.forEach(p=>{
     /* ===== รูป ===== */
-    let img = "";
+    let img="";
     if(p["Drive_raw"]){
       const m=p["Drive_raw"].match(/\/d\/([^/]+)/);
       if(m) img=`https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
@@ -153,10 +156,11 @@ function renderProducts(list){
     const price=Number((p["ราคา"]||"").replace(/,/g,""));
     const priceText=!isNaN(price)?price.toLocaleString()+" บาท":"";
 
-    /* ===== 3D URL (จาก Sheet จริง) ===== */
+    /* ===== 3D URL ===== */
     const model3d =
-      p["model_3d"] ||        // ลิงก์ตรง (แนะนำ)
-      p["model_3d LINK"] || ""; // ลิงก์ Drive ธรรมดา
+      p["model_3d"] ||
+      p["model_3d LINK"] ||
+      "";
 
     box.insertAdjacentHTML("beforeend",`
       <div class="card">
@@ -172,8 +176,8 @@ function renderProducts(list){
           </a>
 
           ${model3d ? `
-            <a class="btn"
-              href="viewer-3d.html?model=${encodeURIComponent(model3d)}"
+            <a class="btn secondary"
+              href="https://3dviewer.net/#model=${encodeURIComponent(model3d)}"
               target="_blank">
               แสดง 3D
             </a>
