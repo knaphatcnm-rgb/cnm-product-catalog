@@ -2,28 +2,18 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>CNM – Checking Access</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CNM Access</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
+
 <body>
 กำลังตรวจสอบสิทธิ์...
-  หากยังคุณไม่ได้รับการอนุมัติ กรุณาติดต่อแอดมิน
 
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-/* ================= CONFIG ================= */
 const LIFF_ID = "2008736700-X7cUjaUv";
+const API_URL = "https://script.google.com/macros/s/AKfycbxS-JYwCm9fAEwT_9FwAM82qAi2HHSHVdyUGbsdHLNFT8EnDvpjH-P5VVPjeAFA5Ck/exec";
 
-/* 🔑 รายชื่อพนักงานที่ผ่านการอนุมัติ (ใช้ Display Name ชั่วคราว) */
-const APPROVED_NAMES = [
-  "NAPHAT K.",
-  "Ub01f0c89ecc00c1c534dda0ef7b8fc34",
-  "Uc6cc04e19093f52a05b83d674ec853d3"
-  // เพิ่มชื่อพนักงานที่ approve แล้วตรงนี้
-];
-
-/* ================= LOGIC ================= */
-async function main() {
+async function start() {
   await liff.init({ liffId: LIFF_ID });
 
   if (!liff.isLoggedIn()) {
@@ -32,24 +22,19 @@ async function main() {
   }
 
   const profile = await liff.getProfile();
-  const displayName = profile.displayName.trim();
+  const userId = profile.userId;
 
-  console.log("LOGIN AS:", displayName);
+  const res = await fetch(API_URL + "?userId=" + userId);
+  const result = await res.json();
 
-  if (APPROVED_NAMES.includes(displayName)) {
-    // ✅ ผ่าน → ไป Catalog
-    location.replace("catalog.html");
+  if (result.allowed) {
+    window.location.replace("catalog.html");
   } else {
-    // ❌ ยังไม่ผ่าน → ไป Register
-    location.replace("register.html");
+    window.location.replace("register.html");
   }
 }
 
-main();
+start();
 </script>
 </body>
 </html>
-
-
-
-
