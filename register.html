@@ -1,61 +1,41 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>Register CNM</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<meta charset="UTF-8">
+<title>Register CNM</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body>
 
+<body>
 กำลังเปิดแบบฟอร์มลงทะเบียน...
 
 <script>
-/* ================= CONFIG ================= */
-const LIFF_ID = = "2008736700-X7cUjaUv";
+const LIFF_ID = "2008736700-X7cUjaUv";
 
-/* Google Form (ตัวที่คุณเปิดในภาพล่าสุด) */
+/* 🔴 ฟอร์มล่าสุดที่คุณใช้อยู่ */
 const FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLScnxbS7laYzC0x3locjp6_UxI9ELu37ywcTOcMXsmzggKng/viewform";
+  "https://docs.google.com/forms/d/e/1FAIpQLScnxbS7laLyCz0c3xIocp6_UxI9ELu37ywcT0cMXsmzgKng/viewform";
 
-/* 🔥 entry ที่ถูกต้องจาก DevTools */
-const ENTRY_LINE_USER_ID = "entry.1707622273";
-/* ========================================= */
+/* 🔴 entry ล่าสุด (LINE User ID) */
+const ENTRY_USER_ID = "entry.990463623";
 
 async function start() {
-  try {
-    await liff.init({ liffId: LIFF_ID });
+  await liff.init({ liffId: LIFF_ID });
 
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
-
-    const profile = await liff.getProfile();
-
-    const userId = profile.userId;
-
-    if (!userId) {
-      alert("ไม่พบ LINE User ID");
-      return;
-    }
-
-    const url =
-      FORM_URL +
-      "?" +
-      ENTRY_LINE_USER_ID +
-      "=" +
-      encodeURIComponent(userId);
-
-    // redirect แบบไม่ย้อนกลับ
-    window.location.replace(url);
-
-  } catch (err) {
-    console.error(err);
-    alert("เกิดข้อผิดพลาดในการเปิดฟอร์ม");
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
   }
+
+  const profile = await liff.getProfile();
+
+  // ✅ ส่งเฉพาะ USER ID เท่านั้น
+  const url =
+    FORM_URL +
+    "?" + ENTRY_USER_ID + "=" + encodeURIComponent(profile.userId);
+
+  // ✅ redirect แบบไม่ย้อนกลับ
+  window.location.replace(url);
 }
 
 start();
