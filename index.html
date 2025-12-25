@@ -13,40 +13,29 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      text-align: center;
     }
     .card {
       background: #fff;
-      padding: 24px 20px;
+      padding: 24px;
       border-radius: 12px;
-      max-width: 320px;
-      width: 100%;
+      max-width: 340px;
+      text-align: center;
       box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     }
-    h2 {
-      margin-top: 0;
-      color: #333;
-    }
-    p {
-      color: #555;
-      line-height: 1.5;
-    }
+    h2 { margin-top: 0; }
+    p { color: #555; line-height: 1.5; }
     button {
       width: 100%;
       padding: 12px;
-      font-size: 16px;
+      margin-top: 12px;
       border-radius: 8px;
       border: none;
+      font-size: 16px;
       cursor: pointer;
-      margin-top: 12px;
     }
-    .btn-primary {
+    .primary {
       background: #06c755;
       color: #fff;
-    }
-    .btn-secondary {
-      background: #eaeaea;
-      color: #333;
     }
   </style>
 </head>
@@ -58,22 +47,22 @@
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-/* ================= CONFIG ================= */
+/* ===== CONFIG ===== */
 const LIFF_ID = "2008736700-X7cUjaUv";
 
-/* 🔑 LINE User ID ที่อนุมัติแล้ว */
+/* 🔑 User ID ที่ได้รับสิทธิ์ใช้งาน */
 const APPROVED_USER_IDS = [
-  "U41d948c298e7ed3c0806dda1e6cce287",
+  "Ub01f0c89ecc00c1c534dda0ef7b8fc34",
   "Uc6cc04e19093f52a05b83d674ec853d3"
 ];
 
-/* ================= LOGIC ================= */
+/* ===== MAIN ===== */
 async function main() {
   await liff.init({ liffId: LIFF_ID });
 
   if (!liff.isInClient()) {
-    document.getElementById("app").innerHTML =
-      "<p>กรุณาเปิดผ่าน LINE Official Account เท่านั้น</p>";
+    document.getElementById("app").innerText =
+      "กรุณาเปิดผ่าน LINE Official Account เท่านั้น";
     return;
   }
 
@@ -85,20 +74,20 @@ async function main() {
   const profile = await liff.getProfile();
   const userId = profile.userId;
 
-  console.log("LOGIN USER ID:", userId);
+  console.log("LINE USER ID:", userId);
 
   if (APPROVED_USER_IDS.includes(userId)) {
-    // ✅ ผ่าน → เข้า Catalog
+    // ✅ ผ่านสิทธิ์
     location.replace("catalog.html");
   } else {
-    // ❌ ไม่ผ่าน → แสดงข้อความ + ปุ่ม
+    // ❌ ไม่ผ่าน → ให้ลงทะเบียนใหม่เสมอ
     document.getElementById("app").innerHTML = `
       <h2>🚫 ยังไม่ได้รับสิทธิ์ใช้งาน</h2>
       <p>
         กรุณาติดต่อผู้ดูแลระบบ<br>
         หรือสามารถลงทะเบียนใหม่อีกครั้ง
       </p>
-      <button class="btn-primary" onclick="goRegister()">
+      <button class="primary" onclick="goRegister()">
         ลงทะเบียนใหม่
       </button>
     `;
