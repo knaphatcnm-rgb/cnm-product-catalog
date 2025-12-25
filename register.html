@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>Register CNM</title>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <meta charset="UTF-8">
+  <title>Register CNM</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 
 <body>
@@ -12,30 +12,39 @@
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
 
-/* 🔴 ฟอร์มล่าสุดที่คุณใช้อยู่ */
+/* ✅ ฟอร์มตัวจริงล่าสุด */
 const FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSdZnaIA6kRDuSXkhahUE60seFFcsq7_03EN4hqHNvFGvm53BQ/viewform";
 
-/* 🔴 entry ล่าสุด (LINE User ID) */
+/* ✅ entry LINE User ID (ล่าสุดจริง) */
 const ENTRY_USER_ID = "entry.990463623";
 
 async function start() {
-  await liff.init({ liffId: LIFF_ID });
+  try {
+    await liff.init({ liffId: LIFF_ID });
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    const profile = await liff.getProfile();
+
+    if (!profile.userId) {
+      document.body.innerHTML = "ไม่สามารถดึง LINE User ID ได้";
+      return;
+    }
+
+    const url =
+      FORM_URL +
+      "?" + ENTRY_USER_ID + "=" + encodeURIComponent(profile.userId);
+
+    // redirect แบบไม่ย้อนกลับ
+    window.location.replace(url);
+
+  } catch (err) {
+    document.body.innerHTML = "เกิดข้อผิดพลาด: " + err.message;
   }
-
-  const profile = await liff.getProfile();
-
-  // ✅ ส่งเฉพาะ USER ID เท่านั้น
-  const url =
-    FORM_URL +
-    "?" + ENTRY_USER_ID + "=" + encodeURIComponent(profile.userId);
-
-  // ✅ redirect แบบไม่ย้อนกลับ
-  window.location.replace(url);
 }
 
 start();
