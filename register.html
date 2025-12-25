@@ -13,8 +13,8 @@ const LIFF_ID = "2008736700-X7cUjaUv";
 const FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSdZnaIA6kRDuSXkhahUE60seFFcsq7_03EN4hqHNvFGvm53BQ/viewform";
 
-// ⚠️ ต้องเป็น entry ของช่อง "LINE User ID (AUTO)" เท่านั้น
-const ENTRY_LINE_USER_ID = "entry.1707622273"; 
+// ✅ จากภาพล่าสุด ยืนยันแล้วว่าอันนี้ถูกต้อง
+const ENTRY_LINE_USER_ID = "entry.1308741008";
 
 async function start() {
   await liff.init({ liffId: LIFF_ID });
@@ -26,7 +26,9 @@ async function start() {
 
   const profile = await liff.getProfile();
 
-  // ✅ ส่งเฉพาะ USER ID
+  console.log("LINE USER ID =", profile.userId);
+
+  // 🔒 ส่งแค่ค่าเดียว
   const url =
     FORM_URL +
     "?" + ENTRY_LINE_USER_ID + "=" + encodeURIComponent(profile.userId);
