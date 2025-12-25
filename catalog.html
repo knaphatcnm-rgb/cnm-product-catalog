@@ -20,6 +20,28 @@
       font-size:18px;
     }
     .container{ padding:12px; }
+
+    .search-box{
+      display:flex;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .search-box input{
+      flex:1;
+      padding:12px;
+      font-size:15px;
+      border-radius:10px;
+      border:1px solid #ccc;
+    }
+    .search-box button{
+      padding:12px 16px;
+      font-size:15px;
+      border-radius:10px;
+      border:none;
+      background:#0a7cff;
+      color:#fff;
+    }
+
     .card{
       background:#fff;
       border-radius:14px;
@@ -54,65 +76,119 @@
 <body>
 
 <header>CNM Interior Product Catalog</header>
-<div class="container" id="products"></div>
+
+<div class="container">
+  <div class="search-box">
+    <input id="searchInput" type="text" placeholder="ค้นหาชื่อ / รหัส / แท็กสินค้า">
+    <button id="searchBtn">ค้นหา</button>
+  </div>
+
+  <div id="products"></div>
+</div>
 
 <script>
+/* ================= CONFIG ================= */
 const CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDhv-ti8VG4RV7TjgJqVz4kMRuWcY_nbqhcvW6WdjPUJwa4T6qFNUHBq47RjN5wDGRtKdI23BpdKpl/pub?output=csv";
 
-/* CSV Parser */
+/* ================= STATE ================= */
+let PRODUCTS = [];
+
+/* ================= CSV PARSER ================= */
 function parseCSV(text){
-  const rows=[], r=[], v="";
+  const rows=[];
   let row=[], val="", q=false;
   for(let i=0;i<text.length;i++){
     const c=text[i], n=text[i+1];
-    if(c=='"'&&n=='"'){val+='"';i++}
-    else if(c=='"')q=!q;
-    else if(c==','&&!q){row.push(val);val=""}
+    if(c=='"'&&n=='"'){ val+='"'; i++; }
+    else if(c=='"'){ q=!q; }
+    else if(c==','&&!q){ row.push(val); val=""; }
     else if((c=='\n'||c=='\r')&&!q){
-      if(val||row.length)row.push(val);
-      if(row.length)rows.push(row);
-      row=[];val="";
+      if(val||row.length) row.push(val);
+      if(row.length) rows.push(row);
+      row=[]; val="";
     } else val+=c;
   }
-  if(val||row.length){row.push(val);rows.push(row)}
+  if(val||row.length){ row.push(val); rows.push(row); }
   return rows;
 }
 
+/* ================= LOAD DATA ================= */
 fetch(CSV_URL)
   .then(r=>r.text())
   .then(text=>{
     const rows=parseCSV(text);
     const headers=rows.shift();
-    const box=document.getElementById("products");
 
     rows.forEach(row=>{
       const p={};
       headers.forEach((h,i)=>p[h]=(row[i]||"").trim());
-
-      let img=p.image_url||"";
-      if(!img && p.Drive_raw){
-        const m=p.Drive_raw.match(/\/d\/([^/]+)/);
-        if(m) img=`https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
-      }
-
-      const price=Number((p["ราคา"]||"").replace(/,/g,""));
-      const priceText=!isNaN(price)?price.toLocaleString()+" บาท":"";
-
-      box.insertAdjacentHTML("beforeend",`
-        <div class="card">
-          <img src="${img}" onerror="this.style.display='none'">
-          <div class="content">
-            <div class="code">${p.Code||""}</div>
-            <div class="name">${p.NAME||""}</div>
-            <div class="size">${p["ขนาด"]||""}</div>
-            <div class="price">${priceText}</div>
-            <a class="btn" href="${p.LINK||"#"}" target="_blank">ดูรายละเอียดสินค้า</a>
-          </div>
-        </div>
-      `);
+      PRODUCTS.push(p);
     });
+
+    renderProducts(PRODUCTS);
   });
+
+/* ================= RENDER ================= */
+function renderProducts(list){
+  const box=document.getElementById("products");
+  box.innerHTML="";
+
+  if(list.length===0){
+    box.innerHTML="<p>ไม่พบสินค้า</p>";
+    return;
+  }
+
+  list.forEach(p=>{
+    let img=p.image_url||"";
+    if(!img && p.Drive_raw){
+      const m=p.Drive_raw.match(/\/d\/([^/]+)/);
+      if(m) img=`https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
+    }
+
+    const price=Number((p["ราคา"]||"").replace(/,/g,""));
+    const priceText=!isNaN(price)?price.toLocaleString()+" บาท":"";
+
+    box.insertAdjacentHTML("beforeend",`
+      <div class="card">
+        <img src="${img}" onerror="this.style.display='none'">
+        <div class="content">
+          <div class="code">${p.Code||""}</div>
+          <div class="name">${p.NAME||""}</div>
+          <div class="size">${p["ขนาด"]||""}</div>
+          <div class="price">${priceText}</div>
+          <a class="btn" href="${p.LINK||"#"}" target="_blank">
+            ดูรายละเอียดสินค้า
+          </a>
+        </div>
+      </div>
+    `);
+  });
+}
+
+/* ================= SEARCH ================= */
+document.getElementById("searchBtn").addEventListener("click", doSearch);
+document.getElementById("searchInput").addEventListener("keypress", e=>{
+  if(e.key==="Enter") doSearch();
+});
+
+function doSearch(){
+  const kw=document.getElementById("searchInput").value.trim().toLowerCase();
+  if(kw.length<2){
+    alert("กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร");
+    return;
+  }
+
+  const result=PRODUCTS.filter(p=>{
+    return (
+      (p.Code||"").toLowerCase().includes(kw) ||
+      (p.NAME||"").toLowerCase().includes(kw) ||
+      (p.product_tags||"").toLowerCase().includes(kw)
+    );
+  });
+
+  renderProducts(result);
+}
 </script>
 
 </body>
