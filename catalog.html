@@ -129,11 +129,6 @@ fetch(CSV_URL)
     });
 
     renderProducts(PRODUCTS);
-  })
-  .catch(err=>{
-    document.getElementById("products").innerHTML =
-      "<p>โหลดข้อมูลไม่สำเร็จ</p>";
-    console.error(err);
   });
 
 /* ================= RENDER ================= */
@@ -147,25 +142,21 @@ function renderProducts(list){
   }
 
   list.forEach(p=>{
-    // === รูปภาพ ===
-    let img=p["image_url"]||"";
-    if(!img && p["Drive_raw"]){
+    /* ===== รูป ===== */
+    let img = "";
+    if(p["Drive_raw"]){
       const m=p["Drive_raw"].match(/\/d\/([^/]+)/);
       if(m) img=`https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
     }
 
-    // === ราคา ===
+    /* ===== ราคา ===== */
     const price=Number((p["ราคา"]||"").replace(/,/g,""));
     const priceText=!isNaN(price)?price.toLocaleString()+" บาท":"";
 
-    // === 3D URL (รองรับชื่อคอลัมน์อะไรก็ได้) ===
+    /* ===== 3D URL (จาก Sheet จริง) ===== */
     const model3d =
-      p["model_3d"] ||
-      p["MODEL_3D"] ||
-      p["Model 3D"] ||
-      p["3D"] ||
-      p["ไฟล์ 3D"] ||
-      "";
+      p["model_3d"] ||        // ลิงก์ตรง (แนะนำ)
+      p["model_3d LINK"] || ""; // ลิงก์ Drive ธรรมดา
 
     box.insertAdjacentHTML("beforeend",`
       <div class="card">
