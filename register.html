@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <title>Register CNM</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
-  กำลังเปิดแบบฟอร์มลงทะเบียน...
+กำลังเปิดแบบฟอร์มลงทะเบียน...
 
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
 const FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSdZnaIA6kRDuSXkhahUE60seFFcsq7_03EN4hqHNvFGvm53BQ/viewform";
+
+// ⚠️ ต้องเป็น entry ของช่อง "LINE User ID (AUTO)" เท่านั้น
+const ENTRY_LINE_USER_ID = "entry.1308741008"; 
 
 async function start() {
   await liff.init({ liffId: LIFF_ID });
@@ -24,10 +26,10 @@ async function start() {
 
   const profile = await liff.getProfile();
 
-  // ✅ ใช้เฉพาะ USER ID
+  // ✅ ส่งเฉพาะ USER ID
   const url =
     FORM_URL +
-    "?entry.1308741008=" + encodeURIComponent(profile.userId);
+    "?" + ENTRY_LINE_USER_ID + "=" + encodeURIComponent(profile.userId);
 
   // redirect แบบไม่ย้อนกลับ
   window.location.replace(url);
