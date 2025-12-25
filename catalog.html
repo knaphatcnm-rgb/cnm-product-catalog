@@ -69,6 +69,7 @@
       border-radius:10px;
       text-decoration:none;
       font-size:14px;
+      margin-top:6px;
     }
   </style>
 </head>
@@ -79,11 +80,8 @@
 
 <div class="container">
   <div class="search-box">
-    <input
-      id="searchInput"
-      type="text"
-      placeholder="ค้นหาชื่อ / รหัส / แท็กสินค้า"
-    >
+    <input id="searchInput" type="text"
+      placeholder="ค้นหาชื่อ / รหัส / แท็กสินค้า">
     <button id="searchBtn">ค้นหา</button>
   </div>
 
@@ -130,7 +128,6 @@ fetch(CSV_URL)
       PRODUCTS.push(p);
     });
 
-    // 👉 แสดงสินค้าทั้งหมดตอนเปิดหน้า
     renderProducts(PRODUCTS);
   });
 
@@ -154,6 +151,15 @@ function renderProducts(list){
     const price=Number((p["ราคา"]||"").replace(/,/g,""));
     const priceText=!isNaN(price)?price.toLocaleString()+" บาท":"";
 
+    // ⭐ รองรับชื่อคอลัมน์ 3D หลายแบบ
+    const model3d =
+      p.model_3d ||
+      p.MODEL_3D ||
+      p.Model_3D ||
+      p.GLTF ||
+      p.gltf ||
+      "";
+
     box.insertAdjacentHTML("beforeend",`
       <div class="card">
         <img src="${img}" onerror="this.style.display='none'">
@@ -162,18 +168,18 @@ function renderProducts(list){
           <div class="name">${p.NAME||""}</div>
           <div class="size">${p["ขนาด"]||""}</div>
           <div class="price">${priceText}</div>
+
           <a class="btn" href="${p.LINK||"#"}" target="_blank">
             ดูรายละเอียดสินค้า
           </a>
-          ${p.model_3d ? `
-  <a class="btn"
-     href="viewer-3d.html?model=${encodeURIComponent(p.model_3d)}"
-     target="_blank">
-     แสดง 3D
-  </a>
-` : ""}
 
-
+          ${model3d ? `
+            <a class="btn"
+              href="viewer-3d.html?model=${encodeURIComponent(model3d)}"
+              target="_blank">
+              แสดง 3D
+            </a>
+          ` : ""}
         </div>
       </div>
     `);
@@ -184,46 +190,25 @@ function renderProducts(list){
 document.getElementById("searchBtn").addEventListener("click", doSearch);
 
 document.getElementById("searchInput").addEventListener("keypress", e=>{
-  if(e.key === "Enter") doSearch();
+  if(e.key==="Enter") doSearch();
 });
 
-// ⭐ สำคัญ: ลบคำค้นจนว่าง → แสดงทั้งหมด
 document.getElementById("searchInput").addEventListener("input", e=>{
-  if(e.target.value.trim() === ""){
+  if(e.target.value.trim()===""){
     renderProducts(PRODUCTS);
   }
 });
 
 /* ================= SEARCH LOGIC ================= */
 function doSearch(){
-  const kw = document
-    .getElementById("searchInput")
-    .value
-    .trim()
-    .toLowerCase();
-
-  // ไม่พิมพ์อะไร → แสดงทั้งหมด
-  if(kw === ""){
+  const kw=document.getElementById("searchInput").value.trim().toLowerCase();
+  if(kw===""){
     renderProducts(PRODUCTS);
     return;
   }
-
-  if(kw.length < 2){
+  if(kw.length<2){
     alert("กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร");
     return;
   }
 
-  const result = PRODUCTS.filter(p=>{
-    return (
-      (p.Code || "").toLowerCase().includes(kw) ||
-      (p.NAME || "").toLowerCase().includes(kw) ||
-      (p.product_tags || "").toLowerCase().includes(kw)
-    );
-  });
-
-  renderProducts(result);
-}
-</script>
-
-</body>
-</html>
+  const result=PRODUCTS.filte
