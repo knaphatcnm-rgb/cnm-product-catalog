@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>Register CNM</title>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <meta charset="UTF-8">
+  <title>Register CNM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-
 <body>
-กำลังเปิดแบบฟอร์ม...
+  กำลังเปิดแบบฟอร์มลงทะเบียน...
 
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
@@ -24,16 +24,16 @@ async function start() {
 
   const profile = await liff.getProfile();
 
+  // ✅ ใช้เฉพาะ USER ID
   const url =
     FORM_URL +
-    "?entry.1308741008=" + encodeURIComponent(profile.userId) +
-    "&entry.176648608253=" + encodeURIComponent(profile.displayName);
+    "?entry.1308741008=" + encodeURIComponent(profile.userId);
 
+  // redirect แบบไม่ย้อนกลับ
   window.location.replace(url);
 }
 
 start();
 </script>
-
 </body>
 </html>
