@@ -11,11 +11,18 @@
 
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
-const API_URL = "https://script.google.com/macros/s/AKfycbwXsUVtBawDMufH7LOC6dOIMuFMzTHkjEocjT36F8_Kw1JmkfLDZ6OD2txvqW11ggac/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwDliCzyDscz7lJrkMKVfr6mQWL3_Lb9-Tam540vLJ9noQq8_IBjY86r4FSUdjBmrrw/exec";
 
 async function start() {
   try {
     await liff.init({ liffId: LIFF_ID });
+
+    // 🔒 บังคับเปิดผ่าน LINE App เท่านั้น
+    if (!liff.isInClient()) {
+      document.body.innerText =
+        "กรุณาเปิดผ่าน LINE Official Account เท่านั้น";
+      return;
+    }
 
     if (!liff.isLoggedIn()) {
       liff.login();
@@ -25,7 +32,15 @@ async function start() {
     const profile = await liff.getProfile();
     const userId = profile.userId;
 
-    const res = await fetch(API_URL + "?userId=" + userId);
+    if (!userId) {
+      document.body.innerText = "ไม่สามารถดึง LINE User ID ได้";
+      return;
+    }
+
+    const res = await fetch(API_URL + "?userId=" + userId, {
+      cache: "no-store"
+    });
+
     const result = await res.json();
 
     switch (result.status) {
@@ -45,8 +60,9 @@ async function start() {
         break;
     }
 
-  } catch (e) {
-    document.body.innerText = "เกิดข้อผิดพลาด: " + e.message;
+  } catch (err) {
+    document.body.innerText =
+      "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง\n" + err.message;
   }
 }
 
@@ -54,4 +70,3 @@ start();
 </script>
 </body>
 </html>
-
