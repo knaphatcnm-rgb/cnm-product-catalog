@@ -5,9 +5,10 @@
 <title>Register CNM</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
+
 <body>
 กำลังเปิดแบบฟอร์ม...
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
 const FORM_URL =
@@ -28,13 +29,11 @@ async function start() {
     "?entry.1308741008=" + encodeURIComponent(profile.userId) +
     "&entry.176648608253=" + encodeURIComponent(profile.displayName);
 
-  // ใช้ replace ดีกว่า href
   window.location.replace(url);
 }
 
 start();
 </script>
-
 
 </body>
 </html>
