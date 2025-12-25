@@ -11,26 +11,42 @@
 
 <script>
 const LIFF_ID = "2008736700-X7cUjaUv";
-const API_URL = "https://script.google.com/macros/s/AKfycbxl2OyJW-W_Npn5eDKwJu2JiNteQ5PFtxy1M61UAEmWAKCSS7RmNlauxwCGBGhwBtqA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxCrL9WfV2ovRnUWUTbMbz0BlOIcIV3FxdLfUyjfRcvVgPhQeh7RtdB6Pf5LL1FSGPO/exec";
 
 async function start() {
-  await liff.init({ liffId: LIFF_ID });
+  try {
+    await liff.init({ liffId: LIFF_ID });
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
 
-  const profile = await liff.getProfile();
-  const userId = profile.userId;
+    const profile = await liff.getProfile();
+    const userId = profile.userId;
 
-  const res = await fetch(API_URL + "?userId=" + userId);
-  const result = await res.json();
+    const res = await fetch(API_URL + "?userId=" + userId);
+    const result = await res.json();
 
-  if (result.allowed) {
-    window.location.replace("catalog.html");
-  } else {
-    window.location.replace("register.html");
+    switch (result.status) {
+      case "approved":
+        window.location.replace("catalog.html");
+        break;
+
+      case "pending":
+        document.body.innerText =
+          "⏳ อยู่ระหว่างตรวจสอบสิทธิ์ กรุณารอการอนุมัติจากผู้ดูแล";
+        break;
+
+      case "reject":
+      case "not_found":
+      default:
+        window.location.replace("register.html");
+        break;
+    }
+
+  } catch (e) {
+    document.body.innerText = "เกิดข้อผิดพลาด: " + e.message;
   }
 }
 
@@ -38,4 +54,3 @@ start();
 </script>
 </body>
 </html>
-
