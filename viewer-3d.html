@@ -5,10 +5,9 @@
   <title>CNM 3D Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Babylon.js (FREE / Open Source) -->
+  <!-- Babylon.js -->
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-  <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
 
   <style>
     html, body {
@@ -16,8 +15,8 @@
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background: #111;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111;
     }
 
     #renderCanvas {
@@ -27,11 +26,43 @@
       display: block;
     }
 
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      color: #fff;
+      z-index: 10;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #overlay.hidden {
+      display: none;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #444;
+      border-top-color: #0a7cff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     #toolbar {
       position: fixed;
       top: 12px;
       right: 12px;
-      z-index: 10;
+      z-index: 20;
       display: flex;
       gap: 8px;
     }
@@ -43,32 +74,40 @@
       border-radius: 6px;
       background: #0a7cff;
       color: #fff;
-      cursor: pointer;
     }
 
-    #toolbar button.secondary {
-      background: #444;
+    #errorBox {
+      color: #ff6b6b;
+      font-size: 15px;
+      line-height: 1.4;
     }
   </style>
 </head>
 
 <body>
 
+<div id="overlay">
+  <div class="spinner"></div>
+  <div id="statusText">กำลังโหลดโมเดล 3D...</div>
+  <div id="errorBox"></div>
+</div>
+
 <div id="toolbar">
-  <button onclick="scene.debugLayer.show()">เครื่องมือ</button>
-  <button class="secondary" onclick="resetCamera()">รีเซ็ตมุมมอง</button>
+  <button onclick="resetCamera()">รีเซ็ตมุมมอง</button>
 </div>
 
 <canvas id="renderCanvas"></canvas>
 
 <script>
-/* ================= BASIC SETUP ================= */
+/* ================= BASIC ================= */
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
-let scene;
+const overlay = document.getElementById("overlay");
+const statusText = document.getElementById("statusText");
+const errorBox = document.getElementById("errorBox");
 
 /* ================= SCENE ================= */
-scene = new BABYLON.Scene(engine);
+const scene = new BABYLON.Scene(engine);
 scene.clearColor = new BABYLON.Color4(0.95, 0.95, 0.95, 1);
 
 /* ================= CAMERA ================= */
@@ -84,71 +123,6 @@ camera.attachControl(canvas, true);
 camera.wheelDeltaPercentage = 0.01;
 
 /* ================= LIGHT ================= */
-const light1 = new BABYLON.HemisphericLight(
-  "light1",
-  new BABYLON.Vector3(0, 1, 0),
-  scene
-);
-light1.intensity = 0.9;
-
-/* ================= URL PARAM ================= */
-const params = new URLSearchParams(window.location.search);
-const modelUrl = params.get("model");
-
-if (!modelUrl) {
-  alert("ไม่พบไฟล์ 3D (.gltf)");
-}
-
-/* ================= LOAD MODEL ================= */
-if (modelUrl) {
-  BABYLON.SceneLoader.Append(
-    "",
-    modelUrl,
-    scene,
-    function () {
-      console.log("3D model loaded");
-
-      // Auto frame model
-      const meshes = scene.meshes.filter(m => m.name !== "__root__");
-      if (meshes.length) {
-        const bounding = BABYLON.Mesh.MergeMeshes(
-          meshes,
-          true,
-          true,
-          undefined,
-          false,
-          true
-        ).getBoundingInfo();
-
-        camera.target = bounding.boundingBox.centerWorld;
-        camera.radius = bounding.boundingSphere.radiusWorld * 2.2;
-      }
-    },
-    null,
-    function (scene, message) {
-      alert("โหลดโมเดลไม่สำเร็จ");
-      console.error(message);
-    }
-  );
-}
-
-/* ================= RENDER LOOP ================= */
-engine.runRenderLoop(() => {
-  scene.render();
-});
-
-window.addEventListener("resize", () => {
-  engine.resize();
-});
-
-/* ================= HELPERS ================= */
-function resetCamera() {
-  camera.setPosition(
-    new BABYLON.Vector3(0, 3, -6)
-  );
-  camera.setTarget(BABYLON.Vector3.Zero());
-}
-</script>
-
-</body>
-</html>
+new BABYLON.HemisphericLight(
+  "light",
+  new BABYLON.V
