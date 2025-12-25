@@ -4,16 +4,64 @@
   <meta charset="UTF-8">
   <title>CNM – Checking Access</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont;
+      background: #f5f7fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    .card {
+      background: #fff;
+      padding: 24px 20px;
+      border-radius: 12px;
+      max-width: 320px;
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    p {
+      color: #555;
+      line-height: 1.5;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    .btn-primary {
+      background: #06c755;
+      color: #fff;
+    }
+    .btn-secondary {
+      background: #eaeaea;
+      color: #333;
+    }
+  </style>
 </head>
+
 <body>
-กำลังตรวจสอบสิทธิ์...
+<div class="card" id="app">
+  กำลังตรวจสอบสิทธิ์...
+</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 /* ================= CONFIG ================= */
 const LIFF_ID = "2008736700-X7cUjaUv";
 
-/* 🔑 รายชื่อ LINE User ID ที่อนุมัติแล้ว (ถาวร) */
+/* 🔑 LINE User ID ที่อนุมัติแล้ว */
 const APPROVED_USER_IDS = [
   "U41d948c298e7ed3c0806dda1e6cce287",
   "Uc6cc04e19093f52a05b83d674ec853d3"
@@ -23,10 +71,9 @@ const APPROVED_USER_IDS = [
 async function main() {
   await liff.init({ liffId: LIFF_ID });
 
-  // 🔒 บังคับเปิดผ่าน LINE OA
   if (!liff.isInClient()) {
-    document.body.innerText =
-      "กรุณาเปิดผ่าน LINE Official Account เท่านั้น";
+    document.getElementById("app").innerHTML =
+      "<p>กรุณาเปิดผ่าน LINE Official Account เท่านั้น</p>";
     return;
   }
 
@@ -44,10 +91,22 @@ async function main() {
     // ✅ ผ่าน → เข้า Catalog
     location.replace("catalog.html");
   } else {
-    // ❌ ไม่ผ่าน → แจ้งสถานะ
-    document.body.innerText =
-      "⏳ ยังไม่ได้รับสิทธิ์ใช้งาน\nกรุณาติดต่อผู้ดูแลระบบ";
+    // ❌ ไม่ผ่าน → แสดงข้อความ + ปุ่ม
+    document.getElementById("app").innerHTML = `
+      <h2>🚫 ยังไม่ได้รับสิทธิ์ใช้งาน</h2>
+      <p>
+        กรุณาติดต่อผู้ดูแลระบบ<br>
+        หรือสามารถลงทะเบียนใหม่อีกครั้ง
+      </p>
+      <button class="btn-primary" onclick="goRegister()">
+        ลงทะเบียนใหม่
+      </button>
+    `;
   }
+}
+
+function goRegister() {
+  location.replace("register.html");
 }
 
 main();
