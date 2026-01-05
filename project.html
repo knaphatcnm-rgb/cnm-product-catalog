@@ -38,8 +38,10 @@ header{background:#0a3d62;color:#fff;padding:12px}
 </div>
 
 <script>
-const API = "YOUR_WEB_APP_URL";
-const PROJECT_ID = "GSA_TB_MASS";
+const API = "https://script.google.com/macros/s/AKfycbxkTfIiklDtPoDGT42Dy9ChdTXGgwlAztS1uFg6LYnAMYciOIP02UEFUvuQQo6BhQk_/exec";
+
+const urlParams = new URLSearchParams(window.location.search);
+const PROJECT_ID = urlParams.get("project_id");
 
 let floors = [];
 let items = [];
