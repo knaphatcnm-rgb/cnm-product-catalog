@@ -97,15 +97,26 @@ loadProjects();
    FUNCTIONS
 ========================== */
 async function loadProjects() {
+  const grid = document.getElementById("projectGrid");
+  grid.innerHTML = "<p>กำลังโหลดข้อมูล...</p>";
+
   try {
     const res = await fetch(`${API_URL}?action=projects`);
-    const projects = await res.json();
+    const result = await res.json();
 
-    const grid = document.getElementById("projectGrid");
+    console.log("API result =", result); // ใช้ debug ได้
+
+    // รองรับทั้ง Array และ Object
+    const projects = Array.isArray(result)
+      ? result
+      : Array.isArray(result.data)
+        ? result.data
+        : [];
+
     grid.innerHTML = "";
 
-    if (!Array.isArray(projects) || projects.length === 0) {
-      grid.innerHTML = "<p>ไม่พบโครงการ</p>";
+    if (projects.length === 0) {
+      grid.innerHTML = "<p>ไม่พบข้อมูลโครงการ</p>";
       return;
     }
 
@@ -131,8 +142,7 @@ async function loadProjects() {
 
   } catch (err) {
     console.error(err);
-    document.getElementById("projectGrid").innerHTML =
-      "<p>เกิดข้อผิดพลาดในการโหลดข้อมูล</p>";
+    grid.innerHTML = "<p>เกิดข้อผิดพลาดในการโหลดข้อมูล</p>";
   }
 }
 </script>
