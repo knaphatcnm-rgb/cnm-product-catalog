@@ -6,13 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+/* ===== BASE ===== */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #f4f6f8;
 }
 
-/* HEADER */
+/* ===== HEADER ===== */
 header {
   background: #0a3d62;
   color: #fff;
@@ -28,12 +29,13 @@ header .sub {
   margin-top: 4px;
 }
 
-/* FLOOR BUTTONS */
+/* ===== FLOOR BUTTONS ===== */
 .floor-buttons {
   padding: 10px;
   background: #fff;
   display: flex;
   gap: 8px;
+  overflow-x: auto;
 }
 .floor-buttons button {
   border: none;
@@ -41,26 +43,30 @@ header .sub {
   border-radius: 20px;
   background: #e0e0e0;
   cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
 }
 .floor-buttons button.active {
   background: #0a3d62;
   color: #fff;
 }
 
-/* PLAN */
+/* ===== PLAN AREA ===== */
 .plan-wrapper {
   position: relative;
   margin: 10px;
   background: #fff;
   border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,.15);
 }
+
 .plan-wrapper img {
   width: 100%;
   display: block;
 }
 
-/* MARKER */
+/* ===== MARKER ===== */
 .marker {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -69,11 +75,16 @@ header .sub {
   width: 28px;
   height: 28px;
   border-radius: 50%;
+  font-size: 14px;
+  font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
   cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.marker:hover {
+  transform: translate(-50%, -50%) scale(1.1);
 }
 </style>
 </head>
@@ -92,94 +103,136 @@ header .sub {
 </div>
 
 <script>
-/* ================= CONFIG ================= */
+/* ==========================
+   CONFIG
+========================== */
 const API_URL =
   "https://script.google.com/macros/s/AKfycbxkTfIiklDtPoDGT42Dy9ChdTXGgwlAztS1uFg6LYnAMYciOIP02UEFUvuQQo6BhQk_/exec";
 
+/* ==========================
+   PARAM
+========================== */
 const params = new URLSearchParams(window.location.search);
 const PROJECT_ID = params.get("project_id");
 
-if (!PROJECT_ID) alert("ไม่พบ project_id");
+if (!PROJECT_ID) {
+  alert("ไม่พบ project_id");
+}
 
-/* ================= STATE ================= */
+/* ==========================
+   STATE
+========================== */
 let floors = [];
 let items = [];
 let currentFloor = null;
 
-/* ================= INIT ================= */
+/* ==========================
+   INIT
+========================== */
 init();
 
 async function init() {
   await loadProject();
   await loadFloors();
   await loadItems();
-  if (floors.length) selectFloor(floors[0].FLOOR_ID);
+
+  if (floors.length > 0) {
+    selectFloor(floors[0].FLOOR_ID);
+  }
 }
 
-/* ================= LOAD DATA ================= */
+/* ==========================
+   LOAD DATA
+========================== */
 async function loadProject() {
-  const r = await fetch(`${API_URL}?action=project&project_id=${PROJECT_ID}`);
-  const p = await r.json();
-  projectName.textContent = p.PROJECT_NAME || "";
-  projectCode.textContent = p.PROJECT_CODE ? `(${p.PROJECT_CODE})` : "";
+  const res = await fetch(`${API_URL}?action=project&project_id=${PROJECT_ID}`);
+  const p = await res.json();
+
+  document.getElementById("projectName").textContent =
+    p.PROJECT_NAME || "";
+  document.getElementById("projectCode").textContent =
+    p.PROJECT_CODE ? `(${p.PROJECT_CODE})` : "";
 }
 
 async function loadFloors() {
-  const r = await fetch(`${API_URL}?action=floors&project_id=${PROJECT_ID}`);
-  floors = await r.json();
+  const res = await fetch(`${API_URL}?action=floors&project_id=${PROJECT_ID}`);
+  floors = await res.json();
 
-  floorButtons.innerHTML = "";
+  const btnBox = document.getElementById("floorButtons");
+  btnBox.innerHTML = "";
+
   floors.forEach(f => {
-    const b = document.createElement("button");
-    b.textContent = f.FLOOR_NAME;
-    b.onclick = () => selectFloor(f.FLOOR_ID);
-    floorButtons.appendChild(b);
+    const btn = document.createElement("button");
+    btn.textContent = f.FLOOR_NAME;
+    btn.onclick = () => selectFloor(f.FLOOR_ID);
+    btnBox.appendChild(btn);
   });
 }
 
 async function loadItems() {
-  const r = await fetch(`${API_URL}?action=items&project_id=${PROJECT_ID}`);
-  items = await r.json();
+  const res = await fetch(`${API_URL}?action=items&project_id=${PROJECT_ID}`);
+  items = await res.json();
 }
 
-/* ================= FLOOR ================= */
-function selectFloor(id) {
-  currentFloor = id;
+/* ==========================
+   FLOOR SELECT
+========================== */
+function selectFloor(floorId) {
+  currentFloor = floorId;
 
   document
     .querySelectorAll(".floor-buttons button")
     .forEach(b => b.classList.remove("active"));
 
-  const idx = floors.findIndex(f => f.FLOOR_ID === id);
-  if (idx >= 0) {
-    document.querySelectorAll(".floor-buttons button")[idx]
+  const index = floors.findIndex(f => f.FLOOR_ID === floorId);
+  if (index >= 0) {
+    document
+      .querySelectorAll(".floor-buttons button")[index]
       .classList.add("active");
   }
 
-  const floor = floors.find(f => f.FLOOR_ID === id);
-  planImage.src = convertDriveImage(floor.PLAN_IMAGE_URL);
+  const floor = floors.find(f => f.FLOOR_ID === floorId);
+  if (!floor) return;
 
-  renderMarkers();
+  // ⭐ สำคัญ: รอให้รูปโหลดเสร็จก่อนค่อย render marker
+  planImage.onload = () => {
+    renderMarkers();
+  };
+
+  planImage.src = convertDriveImage(floor.PLAN_IMAGE_URL);
 }
 
-/* ================= MARKERS ================= */
+/* ==========================
+   MARKERS
+========================== */
 function renderMarkers() {
   document.querySelectorAll(".marker").forEach(m => m.remove());
 
   items
     .filter(i => i.FLOOR_ID === currentFloor)
-    .forEach((i, n) => {
+    .forEach((item, index) => {
       const m = document.createElement("div");
       m.className = "marker";
-      m.textContent = n + 1;
-      m.style.left = i.X + "%";
-      m.style.top = i.Y + "%";
-      m.onclick = () => window.open(i.DRIVE_FOLDER, "_blank");
+      m.textContent = index + 1;
+
+      m.style.left = item.X + "%";
+      m.style.top = item.Y + "%";
+
+      m.title = item.PRODUCT_NAME || "";
+
+      m.onclick = () => {
+        if (item.DRIVE_FOLDER) {
+          window.open(item.DRIVE_FOLDER, "_blank");
+        }
+      };
+
       document.querySelector(".plan-wrapper").appendChild(m);
     });
 }
 
-/* ================= DRIVE IMG ================= */
+/* ==========================
+   UTIL
+========================== */
 function convertDriveImage(url) {
   if (!url) return "";
   if (!url.includes("drive.google.com")) return url;
@@ -188,11 +241,14 @@ function convertDriveImage(url) {
 }
 
 /* =================================================
-   ⭐ CLICK TO GET X / Y (%)  (โค้ดที่คุณถามหา)
+   ⭐ CLICK TO GET X / Y (%)  (โหมดวัดตำแหน่ง)
 ================================================= */
 const img = document.getElementById("planImage");
 
 img.addEventListener("click", e => {
+  // กันกรณีรูปยังโหลดไม่เสร็จ
+  if (!img.complete) return;
+
   const rect = img.getBoundingClientRect();
 
   const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2);
