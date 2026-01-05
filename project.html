@@ -4,13 +4,14 @@
 <meta charset="UTF-8">
 <title>CNM Project</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{margin:0;font-family:sans-serif;background:#f4f6f8}
 header{background:#0a3d62;color:#fff;padding:12px}
 .tabs button{margin-right:6px;padding:6px 12px;border:none;border-radius:6px}
 .tabs button.active{background:#fff;color:#0a3d62;font-weight:bold}
 .plan-wrapper{position:relative}
-#floorPlan{width:100%}
+#floorPlan{width:100%;display:block}
 #markerLayer{position:absolute;inset:0}
 .marker{position:absolute;width:22px;height:22px;background:red;border-radius:50%;transform:translate(-50%,-50%)}
 .popup{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:16px}
@@ -21,7 +22,7 @@ header{background:#0a3d62;color:#fff;padding:12px}
 <body>
 
 <header>
-  <h3 id="projectName"></h3>
+  <h3 id="projectName">กำลังโหลด...</h3>
   <div class="tabs" id="floorTabs"></div>
 </header>
 
@@ -38,34 +39,54 @@ header{background:#0a3d62;color:#fff;padding:12px}
 </div>
 
 <script>
+/* ================= CONFIG ================= */
 const API = "https://script.google.com/macros/s/AKfycbxkTfIiklDtPoDGT42Dy9ChdTXGgwlAztS1uFg6LYnAMYciOIP02UEFUvuQQo6BhQk_/exec";
 
-const urlParams = new URLSearchParams(window.location.search);
-const PROJECT_ID = urlParams.get("project_id");
+const PROJECT_ID = new URLSearchParams(location.search).get("project_id");
 
+/* ================= STATE ================= */
 let floors = [];
 let items = [];
 let currentFloor = "";
 
-init();
+/* ================= INIT ================= */
+if (!PROJECT_ID) {
+  alert("ไม่พบ project_id");
+} else {
+  init();
+}
 
 async function init() {
-  const project = await fetchJSON("project");
-  floors = await fetchJSON("floors");
-  items = await fetchJSON("items");
+  try {
+    const project = await fetchJSON("project");
+    floors = await fetchJSON("floors");
+    items  = await fetchJSON("items");
 
-  document.getElementById("projectName").innerText = project.PROJECT_NAME;
+    if (!project || !Array.isArray(floors) || floors.length === 0) {
+      alert("ข้อมูลโครงการไม่สมบูรณ์");
+      return;
+    }
 
-  currentFloor = floors[0].FLOOR_ID;
-  renderTabs();
-  loadFloor();
+    document.getElementById("projectName").innerText = project.PROJECT_NAME;
+
+    currentFloor = floors[0].FLOOR_ID;
+    renderTabs();
+    loadFloor();
+
+  } catch (err) {
+    console.error(err);
+    alert("โหลดข้อมูลไม่สำเร็จ");
+  }
 }
 
 async function fetchJSON(action) {
   const res = await fetch(`${API}?action=${action}&project_id=${PROJECT_ID}`);
-  return res.json();
+  const data = await res.json();
+  if (data?.error) throw data.error;
+  return data;
 }
 
+/* ================= UI ================= */
 function renderTabs() {
   const t = document.getElementById("floorTabs");
   t.innerHTML = "";
@@ -84,14 +105,17 @@ function renderTabs() {
 
 function loadFloor() {
   const floor = floors.find(f => f.FLOOR_ID === currentFloor);
-  document.getElementById("floorPlan").src = floor.PLAN_IMAGE_URL;
-  renderMarkers();
+  const img = document.getElementById("floorPlan");
+  img.src = floor.PLAN_IMAGE_URL;
+  img.onload = renderMarkers;
 }
 
 function renderMarkers() {
   const layer = document.getElementById("markerLayer");
   layer.innerHTML = "";
-  items.filter(i => i.FLOOR_ID === currentFloor)
+
+  items
+    .filter(i => i.FLOOR_ID === currentFloor && i.X && i.Y)
     .forEach(i => {
       const m = document.createElement("div");
       m.className = "marker";
