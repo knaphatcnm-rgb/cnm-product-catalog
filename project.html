@@ -2,170 +2,113 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>CNM Project Plan</title>
+<title>CNM Project</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #f4f6f8;
-}
-
-header {
-  background: #0a3d62;
-  color: #fff;
-  padding: 12px;
-}
-
-header h2 {
-  margin: 0;
-  font-size: 18px;
-}
-
-#floorButtons {
-  margin-top: 8px;
-}
-
-#floorButtons button {
-  margin-right: 6px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-#floorButtons button.active {
-  background: #fff;
-  color: #0a3d62;
-  font-weight: bold;
-}
-
-#planWrap {
-  position: relative;
-  width: 100%;
-}
-
-#planImage {
-  width: 100%;
-  display: block;
-}
-
-.marker {
-  position: absolute;
-  transform: translate(-50%, -100%);
-  background: red;
-  color: #fff;
-  font-size: 12px;
-  padding: 4px 6px;
-  border-radius: 50%;
-  cursor: pointer;
-}
+body{margin:0;font-family:sans-serif;background:#f4f6f8}
+header{background:#0a3d62;color:#fff;padding:12px}
+.tabs button{margin-right:6px;padding:6px 12px;border:none;border-radius:6px}
+.tabs button.active{background:#fff;color:#0a3d62;font-weight:bold}
+.plan-wrapper{position:relative}
+#floorPlan{width:100%}
+#markerLayer{position:absolute;inset:0}
+.marker{position:absolute;width:22px;height:22px;background:red;border-radius:50%;transform:translate(-50%,-50%)}
+.popup{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:16px}
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h2 id="projectTitle">กำลังโหลด...</h2>
-  <div id="floorButtons"></div>
+  <h3 id="projectName"></h3>
+  <div class="tabs" id="floorTabs"></div>
 </header>
 
-<div id="planWrap">
-  <img id="planImage">
+<div class="plan-wrapper">
+  <img id="floorPlan">
+  <div id="markerLayer"></div>
+</div>
+
+<div id="popup" class="popup hidden">
+  <h4 id="pName"></h4>
+  <p id="pCode"></p>
+  <a id="pLink" target="_blank">เปิดโฟลเดอร์</a><br><br>
+  <button onclick="closePopup()">ปิด</button>
 </div>
 
 <script>
-/* ================= CONFIG ================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbxkTfIiklDtPoDGT42Dy9ChdTXGgwlAztS1uFg6LYnAMYciOIP02UEFUvuQQo6BhQk_/exec";
-const PROJECT_ID = new URLSearchParams(location.search).get("project_id");
+const API = "YOUR_WEB_APP_URL";
+const PROJECT_ID = "GSA_TB_MASS";
 
-/* ================= STATE ================= */
 let floors = [];
 let items = [];
-let currentFloor = null;
+let currentFloor = "";
 
-/* ================= INIT ================= */
-if (!PROJECT_ID) {
-  alert("ไม่พบ project_id");
-} else {
-  init();
-}
+init();
 
 async function init() {
-  await loadProject();
-  await loadFloors();
-  await loadItems();
-  if (floors.length > 0) selectFloor(floors[0].FLOOR_ID);
+  const project = await fetchJSON("project");
+  floors = await fetchJSON("floors");
+  items = await fetchJSON("items");
+
+  document.getElementById("projectName").innerText = project.PROJECT_NAME;
+
+  currentFloor = floors[0].FLOOR_ID;
+  renderTabs();
+  loadFloor();
 }
 
-/* ================= LOADERS ================= */
-async function loadProject() {
-  const res = await fetch(`${API_URL}?action=project&project_id=${PROJECT_ID}`);
-  const p = await res.json();
-  if (!p) {
-    alert("ไม่พบโครงการ");
-    throw new Error("Project not found");
-  }
-  document.getElementById("projectTitle").textContent =
-    `${p.PROJECT_NAME} (${p.PROJECT_CODE})`;
+async function fetchJSON(action) {
+  const res = await fetch(`${API}?action=${action}&project_id=${PROJECT_ID}`);
+  return res.json();
 }
 
-async function loadFloors() {
-  const res = await fetch(`${API_URL}?action=floors&project_id=${PROJECT_ID}`);
-  floors = await res.json();
-
-  const wrap = document.getElementById("floorButtons");
-  wrap.innerHTML = "";
-
+function renderTabs() {
+  const t = document.getElementById("floorTabs");
+  t.innerHTML = "";
   floors.forEach(f => {
     const b = document.createElement("button");
-    b.textContent = f.FLOOR_NAME;
-    b.onclick = () => selectFloor(f.FLOOR_ID);
-    wrap.appendChild(b);
+    b.innerText = f.FLOOR_NAME;
+    if (f.FLOOR_ID === currentFloor) b.classList.add("active");
+    b.onclick = () => {
+      currentFloor = f.FLOOR_ID;
+      renderTabs();
+      loadFloor();
+    };
+    t.appendChild(b);
   });
 }
 
-async function loadItems() {
-  const res = await fetch(`${API_URL}?action=items&project_id=${PROJECT_ID}`);
-  items = await res.json();
-}
-
-/* ================= VIEW ================= */
-function selectFloor(floorId) {
-  currentFloor = floorId;
-
-  document.querySelectorAll("#floorButtons button")
-    .forEach(b => b.classList.remove("active"));
-
-  const idx = floors.findIndex(f => f.FLOOR_ID === floorId);
-  document.querySelectorAll("#floorButtons button")[idx].classList.add("active");
-
-  const floor = floors.find(f => f.FLOOR_ID === floorId);
-  const img = document.getElementById("planImage");
-  img.src = floor.PLAN_IMAGE_URL;
-
-  img.onload = renderMarkers;
+function loadFloor() {
+  const floor = floors.find(f => f.FLOOR_ID === currentFloor);
+  document.getElementById("floorPlan").src = floor.PLAN_IMAGE_URL;
+  renderMarkers();
 }
 
 function renderMarkers() {
-  document.querySelectorAll(".marker").forEach(m => m.remove());
+  const layer = document.getElementById("markerLayer");
+  layer.innerHTML = "";
+  items.filter(i => i.FLOOR_ID === currentFloor)
+    .forEach(i => {
+      const m = document.createElement("div");
+      m.className = "marker";
+      m.style.left = i.X + "%";
+      m.style.top = i.Y + "%";
+      m.onclick = () => openPopup(i);
+      layer.appendChild(m);
+    });
+}
 
-  const wrap = document.getElementById("planWrap");
-  const list = items.filter(i => i.FLOOR_ID === currentFloor);
+function openPopup(i) {
+  document.getElementById("pName").innerText = i.PRODUCT_NAME;
+  document.getElementById("pCode").innerText = i.PRODUCT_CODE;
+  document.getElementById("pLink").href = i.DRIVE_FOLDER;
+  document.getElementById("popup").classList.remove("hidden");
+}
 
-  list.forEach((it, i) => {
-    if (!it.X || !it.Y) return;
-
-    const m = document.createElement("div");
-    m.className = "marker";
-    m.textContent = i + 1;
-    m.style.left = it.X + "%";
-    m.style.top = it.Y + "%";
-    m.onclick = () => window.open(it.DRIVE_FOLDER, "_blank");
-
-    wrap.appendChild(m);
-  });
+function closePopup() {
+  document.getElementById("popup").classList.add("hidden");
 }
 </script>
 
