@@ -6,136 +6,200 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f4f6f8}
-header{background:#0a3d62;color:#fff;padding:12px}
-.tabs button{margin-right:6px;padding:6px 12px;border:none;border-radius:6px}
-.tabs button.active{background:#fff;color:#0a3d62;font-weight:bold}
-.plan-wrapper{position:relative}
-#floorPlan{width:100%}
-#markerLayer{position:absolute;inset:0}
-.marker{position:absolute;width:22px;height:22px;background:red;border-radius:50%;transform:translate(-50%,-50%)}
-.popup{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:16px;box-shadow:0 -2px 12px rgba(0,0,0,.3)}
-.hidden{display:none}
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f4f6f8;
+}
+
+/* HEADER */
+header {
+  background: #0a3d62;
+  color: #fff;
+  padding: 14px;
+}
+header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+header .sub {
+  font-size: 13px;
+  opacity: .85;
+  margin-top: 4px;
+}
+
+/* FLOOR BUTTONS */
+.floor-buttons {
+  padding: 10px;
+  background: #fff;
+  display: flex;
+  gap: 8px;
+}
+.floor-buttons button {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: #e0e0e0;
+  cursor: pointer;
+}
+.floor-buttons button.active {
+  background: #0a3d62;
+  color: #fff;
+}
+
+/* PLAN */
+.plan-wrapper {
+  position: relative;
+  margin: 10px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.plan-wrapper img {
+  width: 100%;
+  display: block;
+}
+
+/* MARKER */
+.marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: #e74c3c;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h3 id="projectName"></h3>
-  <div class="tabs" id="floorTabs"></div>
+  <h2 id="projectName">กำลังโหลด...</h2>
+  <div class="sub" id="projectCode"></div>
 </header>
 
-<div class="plan-wrapper">
-  <img id="floorPlan">
-  <div id="markerLayer"></div>
-</div>
+<div class="floor-buttons" id="floorButtons"></div>
 
-<div id="popup" class="popup hidden">
-  <h4 id="pName"></h4>
-  <p id="pCode"></p>
-  <a id="pLink" target="_blank">เปิดโฟลเดอร์</a><br><br>
-  <button onclick="closePopup()">ปิด</button>
+<div class="plan-wrapper">
+  <img id="planImage" src="">
 </div>
 
 <script>
-/* ======================
-   CONFIG
-====================== */
-const API_URL = "https://script.google.com/macros/s/AKfycbzgX8LdxBXXJ_6W7VAvWmiS-E9iIagKsVbSLMjcEt26gZ7lv9yCvohLBSDbGejt1UcB/exec";
+/* ================= CONFIG ================= */
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbxkTfIiklDtPoDGT42Dy9ChdTXGgwlAztS1uFg6LYnAMYciOIP02UEFUvuQQo6BhQk_/exec";
 
-const urlParams = new URLSearchParams(window.location.search);
-const PROJECT_ID = urlParams.get("project_id");
-  
-if (!PROJECT_ID) {
-  alert("ไม่พบ project_id");
-}
+const params = new URLSearchParams(window.location.search);
+const PROJECT_ID = params.get("project_id");
 
-/* ======================
-   STATE
-====================== */
+if (!PROJECT_ID) alert("ไม่พบ project_id");
+
+/* ================= STATE ================= */
 let floors = [];
 let items = [];
-let currentFloor = "";
+let currentFloor = null;
 
-/* ======================
-   INIT
-====================== */
+/* ================= INIT ================= */
 init();
 
 async function init() {
-  const project = await fetchData("project");
-  floors = await fetchData("floors");
-  items = await fetchData("items");
-
-  document.getElementById("projectName").innerText =
-    project.PROJECT_NAME + " (" + project.PROJECT_CODE + ")";
-
-  currentFloor = floors[0].FLOOR_ID;
-  renderTabs();
-  loadFloor();
+  await loadProject();
+  await loadFloors();
+  await loadItems();
+  if (floors.length) selectFloor(floors[0].FLOOR_ID);
 }
 
-/* ======================
-   API
-====================== */
-async function fetchData(action) {
-  const res = await fetch(`${API_URL}?action=${action}&project_id=${PROJECT_ID}`);
-  return res.json();
+/* ================= LOAD DATA ================= */
+async function loadProject() {
+  const r = await fetch(`${API_URL}?action=project&project_id=${PROJECT_ID}`);
+  const p = await r.json();
+  projectName.textContent = p.PROJECT_NAME || "";
+  projectCode.textContent = p.PROJECT_CODE ? `(${p.PROJECT_CODE})` : "";
 }
 
-/* ======================
-   UI
-====================== */
-function renderTabs() {
-  const tabs = document.getElementById("floorTabs");
-  tabs.innerHTML = "";
+async function loadFloors() {
+  const r = await fetch(`${API_URL}?action=floors&project_id=${PROJECT_ID}`);
+  floors = await r.json();
 
+  floorButtons.innerHTML = "";
   floors.forEach(f => {
-    const btn = document.createElement("button");
-    btn.innerText = f.FLOOR_NAME;
-    if (f.FLOOR_ID === currentFloor) btn.classList.add("active");
-    btn.onclick = () => {
-      currentFloor = f.FLOOR_ID;
-      renderTabs();
-      loadFloor();
-    };
-    tabs.appendChild(btn);
+    const b = document.createElement("button");
+    b.textContent = f.FLOOR_NAME;
+    b.onclick = () => selectFloor(f.FLOOR_ID);
+    floorButtons.appendChild(b);
   });
 }
 
-function loadFloor() {
-  const floor = floors.find(f => f.FLOOR_ID === currentFloor);
-  document.getElementById("floorPlan").src = floor.PLAN_IMAGE_URL;
+async function loadItems() {
+  const r = await fetch(`${API_URL}?action=items&project_id=${PROJECT_ID}`);
+  items = await r.json();
+}
+
+/* ================= FLOOR ================= */
+function selectFloor(id) {
+  currentFloor = id;
+
+  document
+    .querySelectorAll(".floor-buttons button")
+    .forEach(b => b.classList.remove("active"));
+
+  const idx = floors.findIndex(f => f.FLOOR_ID === id);
+  if (idx >= 0) {
+    document.querySelectorAll(".floor-buttons button")[idx]
+      .classList.add("active");
+  }
+
+  const floor = floors.find(f => f.FLOOR_ID === id);
+  planImage.src = convertDriveImage(floor.PLAN_IMAGE_URL);
+
   renderMarkers();
 }
 
+/* ================= MARKERS ================= */
 function renderMarkers() {
-  const layer = document.getElementById("markerLayer");
-  layer.innerHTML = "";
+  document.querySelectorAll(".marker").forEach(m => m.remove());
 
   items
     .filter(i => i.FLOOR_ID === currentFloor)
-    .forEach(i => {
+    .forEach((i, n) => {
       const m = document.createElement("div");
       m.className = "marker";
+      m.textContent = n + 1;
       m.style.left = i.X + "%";
       m.style.top = i.Y + "%";
-      m.onclick = () => openPopup(i);
-      layer.appendChild(m);
+      m.onclick = () => window.open(i.DRIVE_FOLDER, "_blank");
+      document.querySelector(".plan-wrapper").appendChild(m);
     });
 }
 
-function openPopup(i) {
-  document.getElementById("pName").innerText = i.PRODUCT_NAME;
-  document.getElementById("pCode").innerText = i.PRODUCT_CODE;
-  document.getElementById("pLink").href = i.DRIVE_FOLDER;
-  document.getElementById("popup").classList.remove("hidden");
+/* ================= DRIVE IMG ================= */
+function convertDriveImage(url) {
+  if (!url) return "";
+  if (!url.includes("drive.google.com")) return url;
+  const id = url.split("/d/")[1]?.split("/")[0];
+  return `https://drive.google.com/uc?export=view&id=${id}`;
 }
 
-function closePopup() {
-  document.getElementById("popup").classList.add("hidden");
-}
+/* =================================================
+   ⭐ CLICK TO GET X / Y (%)  (โค้ดที่คุณถามหา)
+================================================= */
+const img = document.getElementById("planImage");
+
+img.addEventListener("click", e => {
+  const rect = img.getBoundingClientRect();
+
+  const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2);
+  const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2);
+
+  alert(`X = ${x}% , Y = ${y}%`);
+});
 </script>
 
 </body>
