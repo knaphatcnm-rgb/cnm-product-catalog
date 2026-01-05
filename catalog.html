@@ -69,6 +69,10 @@
       border-radius:10px;
       text-decoration:none;
       font-size:14px;
+      margin-top:6px;
+    }
+    .btn-3d{
+      background:#00a36c;
     }
   </style>
 </head>
@@ -130,7 +134,6 @@ fetch(CSV_URL)
       PRODUCTS.push(p);
     });
 
-    // 👉 แสดงสินค้าทั้งหมดตอนเปิดหน้า
     renderProducts(PRODUCTS);
   });
 
@@ -154,6 +157,12 @@ function renderProducts(list){
     const price=Number((p["ราคา"]||"").replace(/,/g,""));
     const priceText=!isNaN(price)?price.toLocaleString()+" บาท":"";
 
+    /* ===== 3D LINK (เพิ่มใหม่ แต่ไม่กระทบของเดิม) ===== */
+    const model3d = (p["model_3d"] || "").trim();
+    const has3D =
+      model3d &&
+      model3d.match(/\.(gltf|glb)(\?|$)/i);
+
     box.insertAdjacentHTML("beforeend",`
       <div class="card">
         <img src="${img}" onerror="this.style.display='none'">
@@ -162,9 +171,18 @@ function renderProducts(list){
           <div class="name">${p.NAME||""}</div>
           <div class="size">${p["ขนาด"]||""}</div>
           <div class="price">${priceText}</div>
+
           <a class="btn" href="${p.LINK||"#"}" target="_blank">
             ดูรายละเอียดสินค้า
           </a>
+
+          ${has3D ? `
+            <a class="btn btn-3d"
+              href="https://3dviewer.net/#model=${encodeURIComponent(model3d)}"
+              target="_blank">
+              อ่าน 3D
+            </a>
+          ` : ""}
         </div>
       </div>
     `);
@@ -178,7 +196,6 @@ document.getElementById("searchInput").addEventListener("keypress", e=>{
   if(e.key === "Enter") doSearch();
 });
 
-// ⭐ สำคัญ: ลบคำค้นจนว่าง → แสดงทั้งหมด
 document.getElementById("searchInput").addEventListener("input", e=>{
   if(e.target.value.trim() === ""){
     renderProducts(PRODUCTS);
@@ -193,7 +210,6 @@ function doSearch(){
     .trim()
     .toLowerCase();
 
-  // ไม่พิมพ์อะไร → แสดงทั้งหมด
   if(kw === ""){
     renderProducts(PRODUCTS);
     return;
