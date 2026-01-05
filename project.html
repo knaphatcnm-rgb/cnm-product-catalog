@@ -6,85 +6,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-/* ===== BASE ===== */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #f4f6f8;
 }
 
-/* ===== HEADER ===== */
 header {
   background: #0a3d62;
   color: #fff;
-  padding: 14px;
+  padding: 12px;
 }
+
 header h2 {
   margin: 0;
   font-size: 18px;
 }
-header .sub {
-  font-size: 13px;
-  opacity: .85;
-  margin-top: 4px;
+
+#floorButtons {
+  margin-top: 8px;
 }
 
-/* ===== FLOOR BUTTONS ===== */
-.floor-buttons {
-  padding: 10px;
-  background: #fff;
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-}
-.floor-buttons button {
+#floorButtons button {
+  margin-right: 6px;
+  padding: 6px 12px;
   border: none;
-  padding: 8px 14px;
-  border-radius: 20px;
-  background: #e0e0e0;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
-  white-space: nowrap;
-}
-.floor-buttons button.active {
-  background: #0a3d62;
-  color: #fff;
 }
 
-/* ===== PLAN AREA ===== */
-.plan-wrapper {
-  position: relative;
-  margin: 10px;
+#floorButtons button.active {
   background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,.15);
+  color: #0a3d62;
+  font-weight: bold;
 }
 
-.plan-wrapper img {
+#planWrap {
+  position: relative;
+  width: 100%;
+}
+
+#planImage {
   width: 100%;
   display: block;
 }
 
-/* ===== MARKER ===== */
 .marker {
   position: absolute;
-  transform: translate(-50%, -50%);
-  background: #e74c3c;
+  transform: translate(-50%, -100%);
+  background: red;
   color: #fff;
-  width: 28px;
-  height: 28px;
+  font-size: 12px;
+  padding: 4px 6px;
   border-radius: 50%;
-  font-size: 14px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,.3);
-}
-.marker:hover {
-  transform: translate(-50%, -50%) scale(1.1);
 }
 </style>
 </head>
@@ -92,80 +67,62 @@ header .sub {
 <body>
 
 <header>
-  <h2 id="projectName">กำลังโหลด...</h2>
-  <div class="sub" id="projectCode"></div>
+  <h2 id="projectTitle">กำลังโหลด...</h2>
+  <div id="floorButtons"></div>
 </header>
 
-<div class="floor-buttons" id="floorButtons"></div>
-
-<div class="plan-wrapper">
-  <img id="planImage" src="">
+<div id="planWrap">
+  <img id="planImage">
 </div>
 
 <script>
-/* ==========================
-   CONFIG
-========================== */
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbxkTfIiklDtPoDGT42Dy9ChdTXGgwlAztS1uFg6LYnAMYciOIP02UEFUvuQQo6BhQk_/exec";
+/* ================= CONFIG ================= */
+const API_URL = "https://script.google.com/macros/s/AKfycbxkTfIiklDtPoDGT42Dy9ChdTXGgwlAztS1uFg6LYnAMYciOIP02UEFUvuQQo6BhQk_/exec";
+const PROJECT_ID = new URLSearchParams(location.search).get("project_id");
 
-/* ==========================
-   PARAM
-========================== */
-const params = new URLSearchParams(window.location.search);
-const PROJECT_ID = params.get("project_id");
-
-if (!PROJECT_ID) {
-  alert("ไม่พบ project_id");
-}
-
-/* ==========================
-   STATE
-========================== */
+/* ================= STATE ================= */
 let floors = [];
 let items = [];
 let currentFloor = null;
 
-/* ==========================
-   INIT
-========================== */
-init();
+/* ================= INIT ================= */
+if (!PROJECT_ID) {
+  alert("ไม่พบ project_id");
+} else {
+  init();
+}
 
 async function init() {
   await loadProject();
   await loadFloors();
   await loadItems();
-
-  if (floors.length > 0) {
-    selectFloor(floors[0].FLOOR_ID);
-  }
+  if (floors.length > 0) selectFloor(floors[0].FLOOR_ID);
 }
 
-/* ==========================
-   LOAD DATA
-========================== */
+/* ================= LOADERS ================= */
 async function loadProject() {
   const res = await fetch(`${API_URL}?action=project&project_id=${PROJECT_ID}`);
   const p = await res.json();
-
-  document.getElementById("projectName").textContent =
-    p.PROJECT_NAME || "";
-  document.getElementById("projectCode").textContent =
-    p.PROJECT_CODE ? `(${p.PROJECT_CODE})` : "";
+  if (!p) {
+    alert("ไม่พบโครงการ");
+    throw new Error("Project not found");
+  }
+  document.getElementById("projectTitle").textContent =
+    `${p.PROJECT_NAME} (${p.PROJECT_CODE})`;
 }
 
 async function loadFloors() {
   const res = await fetch(`${API_URL}?action=floors&project_id=${PROJECT_ID}`);
   floors = await res.json();
 
-  const btnBox = document.getElementById("floorButtons");
-  btnBox.innerHTML = "";
+  const wrap = document.getElementById("floorButtons");
+  wrap.innerHTML = "";
 
   floors.forEach(f => {
-    const btn = document.createElement("button");
-    btn.textContent = f.FLOOR_NAME;
-    btn.onclick = () => selectFloor(f.FLOOR_ID);
-    btnBox.appendChild(btn);
+    const b = document.createElement("button");
+    b.textContent = f.FLOOR_NAME;
+    b.onclick = () => selectFloor(f.FLOOR_ID);
+    wrap.appendChild(b);
   });
 }
 
@@ -174,88 +131,42 @@ async function loadItems() {
   items = await res.json();
 }
 
-/* ==========================
-   FLOOR SELECT
-========================== */
+/* ================= VIEW ================= */
 function selectFloor(floorId) {
   currentFloor = floorId;
 
-  document
-    .querySelectorAll(".floor-buttons button")
+  document.querySelectorAll("#floorButtons button")
     .forEach(b => b.classList.remove("active"));
 
-  const index = floors.findIndex(f => f.FLOOR_ID === floorId);
-  if (index >= 0) {
-    document
-      .querySelectorAll(".floor-buttons button")[index]
-      .classList.add("active");
-  }
+  const idx = floors.findIndex(f => f.FLOOR_ID === floorId);
+  document.querySelectorAll("#floorButtons button")[idx].classList.add("active");
 
   const floor = floors.find(f => f.FLOOR_ID === floorId);
-  if (!floor) return;
+  const img = document.getElementById("planImage");
+  img.src = floor.PLAN_IMAGE_URL;
 
-  // ⭐ สำคัญ: รอให้รูปโหลดเสร็จก่อนค่อย render marker
-  planImage.onload = () => {
-    renderMarkers();
-  };
-
-  planImage.src = convertDriveImage(floor.PLAN_IMAGE_URL);
+  img.onload = renderMarkers;
 }
 
-/* ==========================
-   MARKERS
-========================== */
 function renderMarkers() {
   document.querySelectorAll(".marker").forEach(m => m.remove());
 
-  items
-    .filter(i => i.FLOOR_ID === currentFloor)
-    .forEach((item, index) => {
-      const m = document.createElement("div");
-      m.className = "marker";
-      m.textContent = index + 1;
+  const wrap = document.getElementById("planWrap");
+  const list = items.filter(i => i.FLOOR_ID === currentFloor);
 
-      m.style.left = item.X + "%";
-      m.style.top = item.Y + "%";
+  list.forEach((it, i) => {
+    if (!it.X || !it.Y) return;
 
-      m.title = item.PRODUCT_NAME || "";
+    const m = document.createElement("div");
+    m.className = "marker";
+    m.textContent = i + 1;
+    m.style.left = it.X + "%";
+    m.style.top = it.Y + "%";
+    m.onclick = () => window.open(it.DRIVE_FOLDER, "_blank");
 
-      m.onclick = () => {
-        if (item.DRIVE_FOLDER) {
-          window.open(item.DRIVE_FOLDER, "_blank");
-        }
-      };
-
-      document.querySelector(".plan-wrapper").appendChild(m);
-    });
+    wrap.appendChild(m);
+  });
 }
-
-/* ==========================
-   UTIL
-========================== */
-function convertDriveImage(url) {
-  if (!url) return "";
-  if (!url.includes("drive.google.com")) return url;
-  const id = url.split("/d/")[1]?.split("/")[0];
-  return `https://drive.google.com/uc?export=view&id=${id}`;
-}
-
-/* =================================================
-   ⭐ CLICK TO GET X / Y (%)  (โหมดวัดตำแหน่ง)
-================================================= */
-const img = document.getElementById("planImage");
-
-img.addEventListener("click", e => {
-  // กันกรณีรูปยังโหลดไม่เสร็จ
-  if (!img.complete) return;
-
-  const rect = img.getBoundingClientRect();
-
-  const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2);
-  const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2);
-
-  alert(`X = ${x}% , Y = ${y}%`);
-});
 </script>
 
 </body>
