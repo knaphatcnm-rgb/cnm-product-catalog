@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>CNM Admin Plan Tool</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #111;
+  color: #fff;
+}
+
+/* ===== TOP BAR ===== */
+header {
+  background: #222;
+  padding: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+header input {
+  padding: 6px;
+  border-radius: 4px;
+  border: none;
+  width: 260px;
+}
+
+header button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#coord {
+  margin-left: auto;
+  font-family: monospace;
+  color: #0f0;
+}
+
+/* ===== PLAN ===== */
+#planWrap {
+  position: relative;
+}
+
+#planImg {
+  width: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+/* ===== MARKER ===== */
+.marker {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: #ff3b3b;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <strong>CNM Admin Plan Tool</strong>
+
+  <input id="imgUrl" placeholder="วาง URL รูปแปลน (PNG/JPG)">
+  <button onclick="loadImage()">โหลดแปลน</button>
+  <button onclick="clearMarkers()">ล้าง Marker</button>
+
+  <div id="coord">X: - , Y: -</div>
+</header>
+
+<div id="planWrap">
+  <img id="planImg">
+</div>
+
+<script>
+const img = document.getElementById("planImg");
+const wrap = document.getElementById("planWrap");
+const coord = document.getElementById("coord");
+
+/* ===== LOAD IMAGE ===== */
+function loadImage() {
+  const url = document.getElementById("imgUrl").value.trim();
+  if (!url) {
+    alert("กรุณาใส่ URL รูปแปลน");
+    return;
+  }
+
+  img.onload = () => {
+    clearMarkers();
+  };
+
+  img.src = url;
+}
+
+/* ===== CLICK TO GET X/Y ===== */
+img.addEventListener("click", e => {
+  if (!img.complete) return;
+
+  const rect = img.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2);
+  const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2);
+
+  coord.textContent = `X: ${x} , Y: ${y}`;
+
+  placeMarker(x, y);
+});
+
+/* ===== PLACE TEMP MARKER ===== */
+function placeMarker(x, y) {
+  const m = document.createElement("div");
+  m.className = "marker";
+  m.style.left = x + "%";
+  m.style.top = y + "%";
+  wrap.appendChild(m);
+}
+
+/* ===== CLEAR ===== */
+function clearMarkers() {
+  document.querySelectorAll(".marker").forEach(m => m.remove());
+}
+</script>
+
+</body>
+</html>
