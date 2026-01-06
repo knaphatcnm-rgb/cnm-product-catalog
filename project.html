@@ -6,16 +6,69 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:sans-serif;background:#f4f6f8}
-header{background:#0a3d62;color:#fff;padding:12px}
-.tabs button{margin-right:6px;padding:6px 12px;border:none;border-radius:6px}
-.tabs button.active{background:#fff;color:#0a3d62;font-weight:bold}
-.plan-wrapper{position:relative}
-#floorPlan{width:100%;display:block}
-#markerLayer{position:absolute;inset:0}
-.marker{position:absolute;width:22px;height:22px;background:red;border-radius:50%;transform:translate(-50%,-50%)}
-.popup{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:16px}
-.hidden{display:none}
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #f4f6f8;
+}
+
+header {
+  background: #0a3d62;
+  color: #fff;
+  padding: 12px;
+}
+
+.tabs button {
+  margin-right: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: #fff;
+  color: #0a3d62;
+  font-weight: bold;
+}
+
+.plan-wrapper {
+  position: relative;
+}
+
+#floorPlan {
+  width: 100%;
+  display: block;
+}
+
+#markerLayer {
+  position: absolute;
+  inset: 0;
+}
+
+.marker {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: red;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.popup {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 -2px 10px rgba(0,0,0,.2);
+}
+
+.hidden {
+  display: none;
+}
 </style>
 </head>
 
@@ -40,7 +93,8 @@ header{background:#0a3d62;color:#fff;padding:12px}
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbxkTfIiklDtPoDGT42Dy9ChdTXGgwlAztS1uFg6LYnAMYciOIP02UEFUvuQQo6BhQk_/exec";
+const API =
+  "https://script.google.com/macros/s/AKfycbxkTfIiklDtPoDGT42Dy9ChdTXGgwlAztS1uFg6LYnAMYciOIP02UEFUvuQQo6BhQk_/exec";
 
 const PROJECT_ID = new URLSearchParams(location.search).get("project_id");
 
@@ -62,43 +116,45 @@ async function init() {
     floors = await fetchJSON("floors");
     items  = await fetchJSON("items");
 
-    if (!project || !Array.isArray(floors) || floors.length === 0) {
-      alert("ข้อมูลโครงการไม่สมบูรณ์");
+    if (!project || !floors.length) {
+      alert("ไม่พบข้อมูลโครงการหรือชั้น");
       return;
     }
 
-    document.getElementById("projectName").innerText = project.PROJECT_NAME;
+    document.getElementById("projectName").innerText =
+      project.PROJECT_NAME;
 
     currentFloor = floors[0].FLOOR_ID;
     renderTabs();
     loadFloor();
 
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
     alert("โหลดข้อมูลไม่สำเร็จ");
   }
 }
 
 async function fetchJSON(action) {
   const res = await fetch(`${API}?action=${action}&project_id=${PROJECT_ID}`);
-  const data = await res.json();
-  if (data?.error) throw data.error;
-  return data;
+  return res.json();
 }
 
 /* ================= UI ================= */
 function renderTabs() {
   const t = document.getElementById("floorTabs");
   t.innerHTML = "";
+
   floors.forEach(f => {
     const b = document.createElement("button");
     b.innerText = f.FLOOR_NAME;
     if (f.FLOOR_ID === currentFloor) b.classList.add("active");
+
     b.onclick = () => {
       currentFloor = f.FLOOR_ID;
       renderTabs();
       loadFloor();
     };
+
     t.appendChild(b);
   });
 }
@@ -106,8 +162,9 @@ function renderTabs() {
 function loadFloor() {
   const floor = floors.find(f => f.FLOOR_ID === currentFloor);
   const img = document.getElementById("floorPlan");
-  img.src = floor.PLAN_IMAGE_URL;
+
   img.onload = renderMarkers;
+  img.src = floor.PLAN_IMAGE_URL;
 }
 
 function renderMarkers() {
@@ -120,16 +177,17 @@ function renderMarkers() {
       const m = document.createElement("div");
       m.className = "marker";
       m.style.left = i.X + "%";
-      m.style.top = i.Y + "%";
+      m.style.top  = i.Y + "%";
       m.onclick = () => openPopup(i);
       layer.appendChild(m);
     });
 }
 
+/* ================= POPUP ================= */
 function openPopup(i) {
-  document.getElementById("pName").innerText = i.PRODUCT_NAME;
-  document.getElementById("pCode").innerText = i.PRODUCT_CODE;
-  document.getElementById("pLink").href = i.DRIVE_FOLDER;
+  document.getElementById("pName").innerText = i.PRODUCT_NAME || "";
+  document.getElementById("pCode").innerText = i.PRODUCT_CODE || "";
+  document.getElementById("pLink").href = i.DRIVE_FOLDER || "#";
   document.getElementById("popup").classList.remove("hidden");
 }
 
